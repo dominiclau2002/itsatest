@@ -1,0 +1,36 @@
+# Checkov Configuration File
+# https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+
+# Directories to scan
+directory:
+  - terraform
+
+# Frameworks to scan
+framework:
+  - terraform
+  - terraform_plan
+
+# Output format
+output: cli
+
+# Enable/Disable specific checks
+# skip-check:
+#   - CKV_AWS_1  # Example: Skip specific check
+
+# Soft fail mode - don't fail the build
+soft-fail: false
+
+# Download external Terraform modules
+download-external-modules: true
+
+# Compact output
+compact: false
+
+# Enable colored output
+color: true
+
+# Quiet mode
+quiet: false
+
+# Repository root for showing relative paths
+repo-root-for-plan-enrichment: .
