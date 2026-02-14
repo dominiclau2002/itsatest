@@ -17,7 +17,7 @@ provider "aws" {
     tags = {
       Environment = var.environment
       ManagedBy   = "Terraform"
-      Project     = "DevSecOps-Test"
+      Project     = var.project_name
     }
   }
 }
