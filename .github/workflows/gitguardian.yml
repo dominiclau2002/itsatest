@@ -15,6 +15,9 @@ jobs:
   scanning:
     name: GitGuardian Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
       - name: Checkout code
