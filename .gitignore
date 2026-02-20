@@ -41,3 +41,6 @@ temp/
 dist/
 build/
 node_modules/
+
+# Claude 
+.claude/
