@@ -10,7 +10,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
   profile = var.profile
 
   # Default tags to apply to all resources
@@ -19,6 +19,8 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Project     = var.project_name
+      CostCenter  = "CS301"
+      CreatedDate = "2026-02-21"
     }
   }
 }

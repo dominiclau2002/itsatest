@@ -60,3 +60,14 @@ variable "private_db_subnet_cidrs" {
   default     = ["10.0.20.0/24", "10.0.21.0/24"]
 }
 
+variable "app_port" {
+  description = "Port that ECS application containers listen on (used in ALB target group and security group rules)"
+  type        = number
+  default     = 8080
+
+  validation {
+    condition     = var.app_port > 1024 && var.app_port <= 65535
+    error_message = "app_port must be an unprivileged port (1025-65535)."
+  }
+}
+
