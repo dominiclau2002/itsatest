@@ -34,11 +34,8 @@ resource "aws_security_group" "ecr_endpoint" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-ecr-endpoint"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "ecr-endpoint"
+    Name      = "${var.project_name}-${var.environment}-sg-ecr-endpoint"
+    Component = "ecr-endpoint"
   }
 }
 
@@ -159,11 +156,8 @@ resource "aws_vpc_endpoint" "secretsmanager" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-vpce-secretsmanager"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "vpce-secretsmanager"
+    Name      = "${var.project_name}-${var.environment}-vpce-secretsmanager"
+    Component = "vpce-secretsmanager"
   }
 }
 
@@ -184,11 +178,8 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-vpce-ecr-dkr"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "vpce-ecr-dkr"
+    Name      = "${var.project_name}-${var.environment}-vpce-ecr-dkr"
+    Component = "vpce-ecr-dkr"
   }
 }
 
@@ -209,11 +200,8 @@ resource "aws_vpc_endpoint" "ecr_api" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-vpce-ecr-api"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "vpce-ecr-api"
+    Name      = "${var.project_name}-${var.environment}-vpce-ecr-api"
+    Component = "vpce-ecr-api"
   }
 }
 
@@ -232,10 +220,7 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [aws_route_table.private_primary.id, aws_route_table.private_standby.id]
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-vpce-s3"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "vpce-s3"
+    Name      = "${var.project_name}-${var.environment}-vpce-s3"
+    Component = "vpce-s3"
   }
 }
