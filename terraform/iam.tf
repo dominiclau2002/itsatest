@@ -277,6 +277,21 @@ data "aws_iam_policy_document" "ecs_task_policy_account" {
       "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_logging_name}",
     ]
   }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth: IAM policy + key policy dual authorization).
+  # Required so Account Service container can read/write KMS-encrypted DynamoDB items at runtime.
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
+    ]
+  }
 }
 
 resource "aws_iam_policy" "ecs_task_policy_account" {
@@ -313,6 +328,22 @@ data "aws_iam_policy_document" "ecs_task_policy_client" {
     actions = ["sqs:SendMessage"]
     resources = [
       "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_logging_name}",
+    ]
+  }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth).
+  # Client Service task role does not access DynamoDB directly, but this permission
+  # is included for consistency in case DynamoDB-backed features are added to Client Service.
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
     ]
   }
 }
@@ -388,6 +419,21 @@ data "aws_iam_policy_document" "lambda_policy_verification" {
     ]
     resources = [
       "arn:aws:s3:::${local.s3_bucket_documents_name}/*",
+    ]
+  }
+
+  # KMS permissions for S3 SSE-KMS encryption on the Documents bucket (Phase 9).
+  # S3 KMS key created in Phase 5 — Documents bucket deferred to Phase 9.
+  statement {
+    sid    = "KMSAccessS3"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.s3.arn,
     ]
   }
 
@@ -467,6 +513,20 @@ data "aws_iam_policy_document" "lambda_policy_logging" {
     actions = ["dynamodb:PutItem"]
     resources = [
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_logs_name}",
+    ]
+  }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth).
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
     ]
   }
 }
@@ -553,6 +613,20 @@ data "aws_iam_policy_document" "lambda_policy_user" {
     resources = [
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}",
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}/index/*",
+    ]
+  }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth).
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
     ]
   }
 }
@@ -647,6 +721,20 @@ data "aws_iam_policy_document" "lambda_policy_sftp_fetch" {
     ]
   }
 
+  # KMS permissions for SFTP S3 bucket SSE-KMS encryption (defense-in-depth).
+  statement {
+    sid    = "KMSAccessS3"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.s3.arn,
+    ]
+  }
+
   # Publish transaction events to the EventBridge default event bus.
   # Default bus confirmed for Phase 4. Custom bus decision deferred to Phase 8 (EventBridge).
   statement {
@@ -736,6 +824,20 @@ data "aws_iam_policy_document" "lambda_policy_anomaly_detection" {
     actions = ["sqs:SendMessage"]
     resources = [
       "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_fraud_notification_name}",
+    ]
+  }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth).
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
     ]
   }
 }
@@ -836,6 +938,21 @@ data "aws_iam_policy_document" "lambda_policy_notification" {
     resources = [
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}",
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}/index/*",
+    ]
+  }
+
+  # KMS permissions for DynamoDB table encryption (defense-in-depth).
+  # Notification Lambda reads from Accounts and Users tables — both encrypted with this key.
+  statement {
+    sid    = "KMSAccessDynamoDB"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = [
+      aws_kms_key.dynamodb.arn,
     ]
   }
 }

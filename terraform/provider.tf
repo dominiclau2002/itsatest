@@ -6,6 +6,24 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.40"
     }
+    # random: generates the RDS master password and Redis AUTH tokens.
+    # These are created once and stored in Secrets Manager — not regenerated on each apply.
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
+  }
+
+  # Remote state backend — S3 bucket and DynamoDB lock table must be bootstrapped
+  # via AWS CLI before running `terraform init`. See CLAUDE.md Commands section
+  # for the bootstrap commands.
+  backend "s3" {
+    bucket         = "itsa-testing-setup-dev-terraform-state"
+    key            = "dev/terraform.tfstate"
+    region         = "ap-southeast-1"
+    dynamodb_table = "itsa-testing-setup-dev-terraform-lock"
+    encrypt        = true
+    profile        = "dominic-admin"
   }
 }
 

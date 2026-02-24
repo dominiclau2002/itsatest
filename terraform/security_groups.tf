@@ -416,9 +416,12 @@ resource "aws_security_group_rule" "ecs_client_secondary_egress_nat" {
 }
 
 # =============================================================================
-# 6. RDS Primary Security Group (private-db-1, ap-southeast-1a)
+# 6. RDS Security Group (private-db-1 and private-db-2)
 #
-# Protects the Aurora PostgreSQL primary writer node.
+# Shared by BOTH the Aurora writer and reader instances.
+# Single-SG design ensures Client Service connectivity survives Aurora failover:
+# on primary failure, Aurora promotes the reader and updates the cluster endpoint
+# transparently — the promoted instance already has this SG, so no connectivity gap.
 # ONLY Client Service tasks may connect on port 5432.
 # Account Service has NO access - Account reads/writes DynamoDB only.
 # Granting Account→RDS access would violate least-privilege with no business reason.
@@ -426,7 +429,7 @@ resource "aws_security_group_rule" "ecs_client_secondary_egress_nat" {
 # =============================================================================
 resource "aws_security_group" "rds_primary" {
   name        = "${var.project_name}-${var.environment}-sg-rds-primary"
-  description = "RDS Aurora primary writer: PostgreSQL from Client Service only; no egress"
+  description = "RDS Aurora writer and reader (single SG — failover safe): PostgreSQL from Client Service only; no egress"
   vpc_id      = aws_vpc.main.id
 
   tags = {
@@ -458,45 +461,7 @@ resource "aws_security_group_rule" "rds_primary_ingress_ecs_client_secondary" {
 }
 
 # =============================================================================
-# 7. RDS Replica Security Group (private-db-2, ap-southeast-1b)
-#
-# Protects the Aurora PostgreSQL read replica in AZ-1b.
-# Purpose: HA and automatic failover only — the replica NEVER receives direct
-# application traffic. All four ECS tasks connect exclusively via the Aurora
-# cluster endpoint, which Aurora always resolves to the primary instance.
-# On primary failure, Aurora promotes the replica and updates the cluster
-# endpoint transparently — no application code changes required.
-# Read offloading is handled by ElastiCache at the application tier, not here.
-#
-# The only inbound traffic is Aurora-managed internal replication from the
-# primary instance. No ECS task SG is granted access.
-# No egress rules: replica does not initiate outbound connections.
-# =============================================================================
-resource "aws_security_group" "rds_replica" {
-  name        = "${var.project_name}-${var.environment}-sg-rds-replica"
-  description = "RDS Aurora read replica: Aurora replication from primary only; HA failover; no app traffic"
-  vpc_id      = aws_vpc.main.id
-
-  tags = {
-    Name      = "${var.project_name}-${var.environment}-sg-rds-replica"
-    Component = "rds-replica"
-  }
-}
-
-# Ingress: PostgreSQL (5432) from RDS primary - Aurora-managed internal replication only.
-# No ECS task SG is permitted here. Application traffic never targets the replica directly.
-resource "aws_security_group_rule" "rds_replica_ingress_rds_primary" {
-  type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.rds_primary.id
-  security_group_id        = aws_security_group.rds_replica.id
-  description              = "Aurora internal replication from primary instance - HA failover only"
-}
-
-# =============================================================================
-# 8. ElastiCache Account Security Group (private-db-1, ap-southeast-1a)
+# 7. ElastiCache Account Security Group (private-db-1, ap-southeast-1a)
 #
 # Protects the Redis cluster serving Account Service.
 # ONLY Account Service tasks may connect on port 6379.
@@ -537,7 +502,7 @@ resource "aws_security_group_rule" "elasticache_account_ingress_ecs_account_seco
 }
 
 # =============================================================================
-# 9. ElastiCache Client Security Group (private-db-1, ap-southeast-1a)
+# 8. ElastiCache Client Security Group (private-db-1, ap-southeast-1a)
 #
 # Protects the Redis cluster serving Client Service.
 # ONLY Client Service tasks may connect on port 6379.
@@ -578,7 +543,7 @@ resource "aws_security_group_rule" "elasticache_client_ingress_ecs_client_second
 }
 
 # =============================================================================
-# 10. Secrets Manager VPC Endpoint Security Group
+# 9. Secrets Manager VPC Endpoint Security Group
 #
 # Protects the interface endpoint ENI for Secrets Manager PrivateLink.
 # Accepts HTTPS (443) from all four ECS task SGs - all services fetch credentials.

@@ -76,3 +76,59 @@ variable "app_port" {
   }
 }
 
+# =============================================================================
+# Phase 5: Data Storage Variables
+# =============================================================================
+
+variable "rds_instance_class" {
+  description = "RDS Aurora instance class for writer and reader nodes (e.g. db.t3.medium for dev, db.r6g.large for prod)"
+  type        = string
+  default     = "db.t3.medium"
+}
+
+variable "rds_backup_retention_days" {
+  description = "Number of days to retain RDS automated backups (minimum 7 for dev, 30 for prod)"
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.rds_backup_retention_days >= 7
+    error_message = "rds_backup_retention_days must be at least 7."
+  }
+}
+
+variable "rds_database_name" {
+  description = "Name of the initial PostgreSQL database created on the Aurora cluster"
+  type        = string
+  default     = "crmdb"
+}
+
+variable "rds_deletion_protection" {
+  description = "Enable deletion protection on the Aurora cluster. Defaults to true for prod parity. Set to false only when terraform destroy is required in dev."
+  type        = bool
+  default     = true
+}
+
+variable "rds_skip_final_snapshot" {
+  description = "Skip final snapshot on cluster deletion. Defaults to false for prod parity. Set to true only if terraform destroy is required in dev and no snapshot is needed."
+  type        = bool
+  default     = false
+}
+
+variable "elasticache_node_type" {
+  description = "ElastiCache node type for Redis clusters (Account and Client). e.g. cache.t3.micro for dev, cache.r6g.large for prod."
+  type        = string
+  default     = "cache.t3.micro"
+}
+
+variable "elasticache_snapshot_retention_days" {
+  description = "Number of days to retain automatic ElastiCache Redis snapshots. Aligned with Aurora backup retention baseline."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.elasticache_snapshot_retention_days >= 1
+    error_message = "elasticache_snapshot_retention_days must be at least 1."
+  }
+}
+
