@@ -171,6 +171,7 @@ data "aws_iam_policy_document" "ecs_execution_policy_client" {
     sid    = "CloudWatchLogsClient"
     effect = "Allow"
     actions = [
+      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
@@ -616,13 +617,31 @@ data "aws_iam_policy_document" "lambda_policy_sftp_fetch" {
     ]
   }
 
-  # Read raw transaction files from the SFTP S3 bucket after AWS Transfer Family delivers them.
-  # Path prefix /transactions/* scopes access to the transaction drop directory only.
+  # List the SFTP bucket at each cron invocation to discover available transaction files.
+  # Bucket-level resource (no trailing /*) is required for s3:ListBucket per AWS IAM rules.
   # Bucket deferred to Phase 5 (S3 data storage). Bucket name locked in via local.s3_bucket_sftp_name.
   statement {
-    sid     = "S3ReadSFTPTransactionFiles"
+    sid     = "S3ListSFTPBucket"
     effect  = "Allow"
-    actions = ["s3:GetObject"]
+    actions = ["s3:ListBucket"]
+    resources = [
+      "arn:aws:s3:::${local.s3_bucket_sftp_name}",
+    ]
+  }
+
+  # Access raw transaction files in the SFTP bucket:
+  #   GetObject:       read the transaction file content
+  #   GetObjectTagging: check whether the file was already processed (idempotency)
+  #   PutObjectTagging: mark the file as processed after successful ingestion
+  # Path prefix /transactions/* scopes access to the transaction drop directory only.
+  statement {
+    sid    = "S3AccessSFTPTransactionFiles"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
+    ]
     resources = [
       "arn:aws:s3:::${local.s3_bucket_sftp_name}/transactions/*",
     ]
@@ -642,7 +661,7 @@ data "aws_iam_policy_document" "lambda_policy_sftp_fetch" {
 
 resource "aws_iam_policy" "lambda_policy_sftp_fetch" {
   name        = "${var.project_name}-${var.environment}-policy-lambda-sftp-fetch"
-  description = "Permissions for SFTP Fetch Lambda: Transfer Family server describe, Secrets Manager SSH key, EventBridge publish"
+  description = "Permissions for SFTP Fetch Lambda: Transfer Family server describe, Secrets Manager SSH key, S3 SFTP bucket (list + read + tag for idempotency), EventBridge publish"
   policy      = data.aws_iam_policy_document.lambda_policy_sftp_fetch.json
 }
 
@@ -788,11 +807,42 @@ data "aws_iam_policy_document" "lambda_policy_notification" {
       "arn:aws:ses:${var.aws_region}:${data.aws_caller_identity.current.account_id}:identity/*",
     ]
   }
+
+  # Look up agent_id from the Accounts table using client_id received in the SQS payload.
+  # The Accounts table includes agent_id as an attribute (owner of the client account).
+  # NOTE: agent_id must be included in the Account table schema when created in Phase 5.
+  statement {
+    sid    = "DynamoDBAccountsReadAgentId"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_accounts_name}",
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_accounts_name}/index/*",
+    ]
+  }
+
+  # Fetch agent_email from the Users table using agent_id obtained from the Accounts table.
+  # Required to address the fraud alert email to the correct agent.
+  statement {
+    sid    = "DynamoDBUsersReadAgentEmail"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}",
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_users_name}/index/*",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "lambda_policy_notification" {
   name        = "${var.project_name}-${var.environment}-policy-lambda-notification"
-  description = "Permissions for Notification Lambda: SQS Fraud Notification queue consumer (receive/delete), SES fraud alert email to agent"
+  description = "Permissions for Notification Lambda: SQS Fraud Notification queue consumer (receive/delete), Accounts DynamoDB (get agent_id), Users DynamoDB (get agent_email), SES fraud alert email to agent"
   policy      = data.aws_iam_policy_document.lambda_policy_notification.json
 }
 

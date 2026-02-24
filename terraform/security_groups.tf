@@ -17,7 +17,7 @@
 #   SQS / SNS / SES     - AWS-managed, no VPC interface endpoint here
 #   S3                  - gateway endpoint requires no SG
 #   CloudFront          - global CDN, not in VPC
-#   ECR (dkr/api)       - interface endpoints managed by AWS; no custom SG needed
+#   ECR (dkr/api)       - ECR (dkr/api) — endpoint SG and ECS egress rules defined in vpc_endpoints.tf
 #   Cognito             - SaaS endpoint, no VPC presence
 # =============================================================================
 
@@ -45,11 +45,8 @@ resource "aws_security_group" "alb" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-alb"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "alb"
+    Name      = "${var.project_name}-${var.environment}-sg-alb"
+    Component = "alb"
   }
 }
 
@@ -124,11 +121,8 @@ resource "aws_security_group" "ecs_account_primary" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-ecs-account-primary"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "ecs-account-primary"
+    Name      = "${var.project_name}-${var.environment}-sg-ecs-account-primary"
+    Component = "ecs-account-primary"
   }
 }
 
@@ -178,8 +172,8 @@ resource "aws_security_group_rule" "ecs_account_primary_egress_secretsmanager" {
 }
 
 # Egress: HTTPS (443) to internet via NAT - DynamoDB, SQS, Cognito, CloudWatch
-# Note: DynamoDB and SQS VPC endpoints will be added in Phase 3b (vpc_endpoints.tf)
-#       to eliminate this NAT dependency and improve security posture.
+# DynamoDB and SQS intentionally route via NAT Gateway by architecture decision — VPC endpoints
+# are deliberately absent for these services. Phase 3b complete.
 resource "aws_security_group_rule" "ecs_account_primary_egress_nat" {
   type              = "egress"
   from_port         = 443
@@ -187,7 +181,7 @@ resource "aws_security_group_rule" "ecs_account_primary_egress_nat" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.ecs_account_primary.id
-  description       = "HTTPS via NAT to DynamoDB, SQS, Cognito, CloudWatch (VPC endpoints pending Phase 3b)"
+  description       = "DynamoDB, SQS, Cognito, CloudWatch route via NAT Gateway by architecture decision - VPC endpoints deliberately absent for these services"
 }
 
 # =============================================================================
@@ -202,11 +196,8 @@ resource "aws_security_group" "ecs_account_secondary" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-ecs-account-secondary"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "ecs-account-secondary"
+    Name      = "${var.project_name}-${var.environment}-sg-ecs-account-secondary"
+    Component = "ecs-account-secondary"
   }
 }
 
@@ -257,7 +248,7 @@ resource "aws_security_group_rule" "ecs_account_secondary_egress_nat" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.ecs_account_secondary.id
-  description       = "HTTPS via NAT to DynamoDB, SQS, Cognito, CloudWatch (VPC endpoints pending Phase 3b)"
+  description       = "DynamoDB, SQS, Cognito, CloudWatch route via NAT Gateway by architecture decision - VPC endpoints deliberately absent for these services"
 }
 
 # =============================================================================
@@ -274,11 +265,8 @@ resource "aws_security_group" "ecs_client_primary" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-ecs-client-primary"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "ecs-client-primary"
+    Name      = "${var.project_name}-${var.environment}-sg-ecs-client-primary"
+    Component = "ecs-client-primary"
   }
 }
 
@@ -338,6 +326,8 @@ resource "aws_security_group_rule" "ecs_client_primary_egress_secretsmanager" {
 }
 
 # Egress: HTTPS (443) to internet via NAT - SQS, Cognito, CloudWatch
+# SQS intentionally routes via NAT Gateway by architecture decision — VPC endpoints
+# are deliberately absent for these services. Phase 3b complete.
 resource "aws_security_group_rule" "ecs_client_primary_egress_nat" {
   type              = "egress"
   from_port         = 443
@@ -345,7 +335,7 @@ resource "aws_security_group_rule" "ecs_client_primary_egress_nat" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.ecs_client_primary.id
-  description       = "HTTPS via NAT to SQS, Cognito, CloudWatch (VPC endpoints pending Phase 3b)"
+  description       = "SQS, Cognito, CloudWatch route via NAT Gateway by architecture decision - VPC endpoints deliberately absent for these services"
 }
 
 # =============================================================================
@@ -360,11 +350,8 @@ resource "aws_security_group" "ecs_client_secondary" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-ecs-client-secondary"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "ecs-client-secondary"
+    Name      = "${var.project_name}-${var.environment}-sg-ecs-client-secondary"
+    Component = "ecs-client-secondary"
   }
 }
 
@@ -425,7 +412,7 @@ resource "aws_security_group_rule" "ecs_client_secondary_egress_nat" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.ecs_client_secondary.id
-  description       = "HTTPS via NAT to SQS, Cognito, CloudWatch (VPC endpoints pending Phase 3b)"
+  description       = "SQS, Cognito, CloudWatch route via NAT Gateway by architecture decision - VPC endpoints deliberately absent for these services"
 }
 
 # =============================================================================
@@ -443,11 +430,8 @@ resource "aws_security_group" "rds_primary" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-rds-primary"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "rds-primary"
+    Name      = "${var.project_name}-${var.environment}-sg-rds-primary"
+    Component = "rds-primary"
   }
 }
 
@@ -494,11 +478,8 @@ resource "aws_security_group" "rds_replica" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-rds-replica"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "rds-replica"
+    Name      = "${var.project_name}-${var.environment}-sg-rds-replica"
+    Component = "rds-replica"
   }
 }
 
@@ -528,11 +509,8 @@ resource "aws_security_group" "elasticache_account" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-elasticache-account"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "elasticache-account"
+    Name      = "${var.project_name}-${var.environment}-sg-elasticache-account"
+    Component = "elasticache-account"
   }
 }
 
@@ -572,11 +550,8 @@ resource "aws_security_group" "elasticache_client" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-elasticache-client"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "elasticache-client"
+    Name      = "${var.project_name}-${var.environment}-sg-elasticache-client"
+    Component = "elasticache-client"
   }
 }
 
@@ -619,11 +594,8 @@ resource "aws_security_group" "secretsmanager_endpoint" {
   vpc_id      = aws_vpc.main.id
 
   tags = {
-    Name        = "${var.project_name}-${var.environment}-sg-secretsmanager-endpoint"
-    Environment = var.environment
-    Project     = var.project_name
-    ManagedBy   = "Terraform"
-    Component   = "secretsmanager-endpoint"
+    Name      = "${var.project_name}-${var.environment}-sg-secretsmanager-endpoint"
+    Component = "secretsmanager-endpoint"
   }
 }
 
