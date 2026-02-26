@@ -1,0 +1,81 @@
+# =============================================================================
+# RDS Aurora Outputs
+# =============================================================================
+
+output "rds_cluster_endpoint" {
+  description = "Aurora cluster writer endpoint"
+  value       = aws_rds_cluster.primary.endpoint
+}
+
+output "rds_cluster_reader_endpoint" {
+  description = "Aurora cluster reader endpoint"
+  value       = aws_rds_cluster.primary.reader_endpoint
+}
+
+output "rds_cluster_port" {
+  description = "Aurora cluster port (PostgreSQL 5432)"
+  value       = aws_rds_cluster.primary.port
+}
+
+output "rds_cluster_database_name" {
+  description = "Name of the initial database created on the Aurora cluster"
+  value       = aws_rds_cluster.primary.database_name
+}
+
+# =============================================================================
+# DynamoDB Outputs
+# =============================================================================
+
+output "dynamodb_table_accounts_name" {
+  description = "DynamoDB Accounts table name"
+  value       = aws_dynamodb_table.accounts.name
+}
+
+output "dynamodb_table_logs_name" {
+  description = "DynamoDB Logs table name"
+  value       = aws_dynamodb_table.logs.name
+}
+
+output "dynamodb_table_users_name" {
+  description = "DynamoDB Users table name"
+  value       = aws_dynamodb_table.users.name
+}
+
+output "dynamodb_table_transactions_name" {
+  description = "DynamoDB Transactions table name"
+  value       = aws_dynamodb_table.transactions.name
+}
+
+output "dynamodb_table_accounts_stream_arn" {
+  description = "DynamoDB Accounts table stream ARN"
+  value       = aws_dynamodb_table.accounts.stream_arn
+}
+
+output "dynamodb_table_transactions_stream_arn" {
+  description = "DynamoDB Transactions table stream ARN"
+  value       = aws_dynamodb_table.transactions.stream_arn
+}
+
+# =============================================================================
+# ElastiCache Outputs
+# =============================================================================
+
+output "elasticache_account_primary_endpoint_address" {
+  description = "Account Redis primary endpoint address"
+  value       = aws_elasticache_replication_group.account.primary_endpoint_address
+}
+
+output "elasticache_account_port" {
+  description = "Account Redis port (always 6379)"
+  value       = aws_elasticache_replication_group.account.port
+}
+
+output "elasticache_client_primary_endpoint_address" {
+  description = "Client Redis primary endpoint address"
+  value       = aws_elasticache_replication_group.client.primary_endpoint_address
+}
+
+output "elasticache_client_port" {
+  description = "Client Redis port (always 6379)"
+  value       = aws_elasticache_replication_group.client.port
+}
