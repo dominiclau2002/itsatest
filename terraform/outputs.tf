@@ -264,3 +264,166 @@ output "s3_bucket_sftp_arn" {
   description = "SFTP S3 bucket ARN (for future bucket policy or cross-account access)"
   value       = module.storage.s3_sftp_bucket_arn
 }
+
+# =============================================================================
+# Phase 6: Authentication Outputs
+# =============================================================================
+
+output "cognito_user_pool_id" {
+  description = "Cognito user pool ID — used for JWKS URL construction and ECS env vars"
+  value       = module.auth.cognito_user_pool_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito user pool ARN"
+  value       = module.auth.cognito_user_pool_arn
+}
+
+output "cognito_user_pool_endpoint" {
+  description = "Cognito user pool endpoint"
+  value       = module.auth.cognito_user_pool_endpoint
+}
+
+output "cognito_client_id" {
+  description = "Cognito app client ID for frontend OAuth 2.0 configuration"
+  value       = module.auth.cognito_client_id
+}
+
+output "cognito_domain" {
+  description = "Cognito hosted UI full domain"
+  value       = module.auth.cognito_domain
+}
+
+output "ses_identity_arn" {
+  description = "SES email identity ARN for Lambda sender verification"
+  value       = module.auth.ses_identity_arn
+}
+
+# =============================================================================
+# Phase 7: Compute & Application Tier Outputs
+# =============================================================================
+
+output "ecs_cluster_id" {
+  description = "ECS Fargate cluster ID"
+  value       = module.compute.ecs_cluster_id
+}
+
+output "ecs_cluster_name" {
+  description = "ECS Fargate cluster name"
+  value       = module.compute.ecs_cluster_name
+}
+
+output "alb_dns_name" {
+  description = "ALB DNS name — use for HTTP access until custom domain configured in Phase 9"
+  value       = module.compute.alb_dns_name
+}
+
+output "alb_zone_id" {
+  description = "ALB hosted zone ID for Route 53 alias records (Phase 9)"
+  value       = module.compute.alb_zone_id
+}
+
+output "alb_arn" {
+  description = "ALB ARN for WAF association (Phase 9)"
+  value       = module.compute.alb_arn
+}
+
+output "alb_listener_arn" {
+  description = "HTTP listener ARN — upgrade to HTTPS in Phase 9"
+  value       = module.compute.alb_listener_arn
+}
+
+output "ecr_repo_account_service_url" {
+  description = "ECR repository URL for Account Service container images"
+  value       = module.compute.ecr_repo_account_service_url
+}
+
+output "ecr_repo_client_service_url" {
+  description = "ECR repository URL for Client Service container images"
+  value       = module.compute.ecr_repo_client_service_url
+}
+
+output "target_group_account_arn" {
+  description = "ALB target group ARN for Account Service"
+  value       = module.compute.target_group_account_arn
+}
+
+output "target_group_client_arn" {
+  description = "ALB target group ARN for Client Service"
+  value       = module.compute.target_group_client_arn
+}
+
+# =============================================================================
+# Phase 8: Event-Driven Architecture Outputs
+# =============================================================================
+
+# --- SQS Queue Outputs ---
+
+output "sqs_queue_logging_url" {
+  description = "SQS Logging queue URL — passed to ECS task definitions for audit event publishing"
+  value       = module.serverless.sqs_queue_logging_url
+}
+
+output "sqs_queue_logging_arn" {
+  description = "SQS Logging queue ARN"
+  value       = module.serverless.sqs_queue_logging_arn
+}
+
+output "sqs_queue_fraud_notification_url" {
+  description = "SQS Fraud Notification queue URL — used by Anomaly Detection Lambda to enqueue fraud alerts"
+  value       = module.serverless.sqs_queue_fraud_notification_url
+}
+
+output "sqs_queue_fraud_notification_arn" {
+  description = "SQS Fraud Notification queue ARN"
+  value       = module.serverless.sqs_queue_fraud_notification_arn
+}
+
+output "sqs_queue_fraud_notification_dlq_arn" {
+  description = "SQS Fraud Notification dead-letter queue ARN — holds unprocessable fraud alerts after 3 retries"
+  value       = module.serverless.sqs_queue_fraud_notification_dlq_arn
+}
+
+# --- Lambda Function Outputs ---
+
+output "lambda_verification_arn" {
+  description = "Verification Lambda function ARN"
+  value       = module.serverless.lambda_verification_arn
+}
+
+output "lambda_logging_arn" {
+  description = "Logging Lambda function ARN"
+  value       = module.serverless.lambda_logging_arn
+}
+
+output "lambda_user_arn" {
+  description = "User Lambda function ARN"
+  value       = module.serverless.lambda_user_arn
+}
+
+output "lambda_sftp_fetch_arn" {
+  description = "SFTP Fetch Lambda function ARN"
+  value       = module.serverless.lambda_sftp_fetch_arn
+}
+
+output "lambda_anomaly_detection_arn" {
+  description = "Anomaly Detection Lambda function ARN"
+  value       = module.serverless.lambda_anomaly_detection_arn
+}
+
+output "lambda_notification_arn" {
+  description = "Notification Lambda function ARN"
+  value       = module.serverless.lambda_notification_arn
+}
+
+# --- EventBridge Outputs ---
+
+output "eventbridge_sftp_schedule_arn" {
+  description = "EventBridge SFTP schedule rule ARN"
+  value       = module.serverless.eventbridge_sftp_schedule_arn
+}
+
+output "eventbridge_transaction_review_arn" {
+  description = "EventBridge transaction-for-review event rule ARN"
+  value       = module.serverless.eventbridge_transaction_review_arn
+}

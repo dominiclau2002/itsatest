@@ -412,19 +412,21 @@ resource "aws_secretsmanager_secret_version" "redis_client_auth" {
 }
 
 # Account Redis Replication Group
+# Single-node (primary only, AZ-1a). No automatic failover — ECS services must
+# handle cache unavailability gracefully by falling back to DynamoDB directly.
 resource "aws_elasticache_replication_group" "account" {
   replication_group_id = "${var.project_name}-${var.environment}-redis-account"
-  description          = "Redis cache for Account Service — active-passive across AZ-1a and AZ-1b"
+  description          = "Redis cache for Account Service — single-node primary in AZ-1a (no replica)"
 
   engine         = "redis"
   engine_version = "7.0"
   node_type      = var.elasticache_node_type
 
-  num_cache_clusters         = 2
-  automatic_failover_enabled = true
-  multi_az_enabled           = true
+  num_cache_clusters         = 1
+  automatic_failover_enabled = false
+  multi_az_enabled           = false
 
-  preferred_cache_cluster_azs = [var.availability_zones[0], var.availability_zones[1]]
+  preferred_cache_cluster_azs = [var.availability_zones[0]]
 
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [var.sg_elasticache_account_id]
@@ -447,19 +449,21 @@ resource "aws_elasticache_replication_group" "account" {
 }
 
 # Client Redis Replication Group
+# Single-node (primary only, AZ-1a). No automatic failover — ECS services must
+# handle cache unavailability gracefully by falling back to RDS directly.
 resource "aws_elasticache_replication_group" "client" {
   replication_group_id = "${var.project_name}-${var.environment}-redis-client"
-  description          = "Redis cache for Client Service — active-passive across AZ-1a and AZ-1b"
+  description          = "Redis cache for Client Service — single-node primary in AZ-1a (no replica)"
 
   engine         = "redis"
   engine_version = "7.0"
   node_type      = var.elasticache_node_type
 
-  num_cache_clusters         = 2
-  automatic_failover_enabled = true
-  multi_az_enabled           = true
+  num_cache_clusters         = 1
+  automatic_failover_enabled = false
+  multi_az_enabled           = false
 
-  preferred_cache_cluster_azs = [var.availability_zones[0], var.availability_zones[1]]
+  preferred_cache_cluster_azs = [var.availability_zones[0]]
 
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [var.sg_elasticache_client_id]
