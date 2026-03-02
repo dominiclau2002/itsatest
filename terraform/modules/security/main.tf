@@ -138,6 +138,17 @@ resource "aws_security_group_rule" "alb_egress_ecs_client_secondary" {
   description              = "Forward requests to Client Service secondary tasks in AZ-1b"
 }
 
+# Temporary HTTP ingress for ALB — replace with HTTPS-only (443) in Phase 9 when ACM certificate is available
+resource "aws_security_group_rule" "alb_ingress_http_cloudfront" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  prefix_list_ids   = [data.aws_ec2_managed_prefix_list.cloudfront.id]
+  security_group_id = aws_security_group.alb.id
+  description       = "HTTP from CloudFront - temporary until ACM certificate in Phase 9"
+}
+
 # =============================================================================
 # 2. ECS Account Service - Primary (private-app-1, ap-southeast-1a)
 # =============================================================================
@@ -1208,7 +1219,7 @@ data "aws_iam_policy_document" "lambda_policy_verification" {
       "ses:SendRawEmail",
     ]
     resources = [
-      "arn:aws:ses:${var.aws_region}:${data.aws_caller_identity.current.account_id}:identity/*",
+      var.ses_identity_arn,
     ]
   }
 
@@ -1245,7 +1256,7 @@ data "aws_iam_policy_document" "lambda_policy_verification" {
       "cognito-idp:AdminGetUser",
     ]
     resources = [
-      "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/*",
+      var.cognito_user_pool_arn,
     ]
   }
 }
@@ -1364,7 +1375,7 @@ data "aws_iam_policy_document" "lambda_policy_user" {
       "cognito-idp:AdminGetUser",
     ]
     resources = [
-      "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/*",
+      var.cognito_user_pool_arn,
     ]
   }
 
@@ -1628,7 +1639,7 @@ data "aws_iam_policy_document" "lambda_policy_notification" {
       "ses:SendRawEmail",
     ]
     resources = [
-      "arn:aws:ses:${var.aws_region}:${data.aws_caller_identity.current.account_id}:identity/*",
+      var.ses_identity_arn,
     ]
   }
 

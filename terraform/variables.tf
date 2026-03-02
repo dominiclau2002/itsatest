@@ -132,3 +132,90 @@ variable "elasticache_snapshot_retention_days" {
   }
 }
 
+# =============================================================================
+# Phase 6: Authentication Variables
+# =============================================================================
+
+variable "cognito_domain_prefix" {
+  description = "Cognito hosted UI domain prefix (must be globally unique across all AWS accounts). Defaults to project_name-environment."
+  type        = string
+  default     = null
+}
+
+variable "callback_urls" {
+  description = "OAuth 2.0 callback URLs for the Cognito app client (e.g., http://localhost:3000/callback for dev)"
+  type        = list(string)
+}
+
+variable "logout_urls" {
+  description = "OAuth 2.0 logout redirect URLs for the Cognito app client"
+  type        = list(string)
+}
+
+variable "ses_sender_email" {
+  description = "Email address to verify as SES sender identity for Verification and Notification Lambdas"
+  type        = string
+}
+
+# =============================================================================
+# Phase 7: Compute & Application Tier Variables
+# =============================================================================
+
+variable "ecs_task_cpu" {
+  description = "CPU units for ECS Fargate tasks (256 = 0.25 vCPU). Override in tfvars for prod."
+  type        = number
+  default     = 256
+}
+
+variable "ecs_task_memory" {
+  description = "Memory in MiB for ECS Fargate tasks. Must be compatible with cpu value."
+  type        = number
+  default     = 512
+}
+
+variable "container_image_account" {
+  description = "Container image URI for Account Service. Placeholder until real images are pushed to ECR."
+  type        = string
+  default     = "public.ecr.aws/docker/library/httpd:2.4"
+}
+
+variable "container_image_client" {
+  description = "Container image URI for Client Service. Placeholder until real images are pushed to ECR."
+  type        = string
+  default     = "public.ecr.aws/docker/library/httpd:2.4"
+}
+
+variable "health_check_path" {
+  description = "Health check path for ALB target groups"
+  type        = string
+  default     = "/health"
+}
+
+variable "ecs_log_retention_days" {
+  description = "CloudWatch log retention in days for ECS container logs"
+  type        = number
+  default     = 30
+}
+
+variable "alb_deletion_protection" {
+  description = "Enable ALB deletion protection. Default false for dev; set true for prod via tfvars."
+  type        = bool
+  default     = false
+}
+
+# =============================================================================
+# Phase 8: Event-Driven Architecture Variables
+# =============================================================================
+
+variable "lambda_log_retention_days" {
+  description = "CloudWatch log retention in days for Lambda function logs"
+  type        = number
+  default     = 30
+}
+
+variable "sftp_schedule_expression" {
+  description = "EventBridge schedule expression for SFTP fetch trigger (e.g. rate(1 hour), cron(0 * * * ? *))"
+  type        = string
+  default     = "rate(1 hour)"
+}
+

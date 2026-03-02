@@ -79,3 +79,31 @@ output "elasticache_client_port" {
   description = "Client Redis port (always 6379)"
   value       = aws_elasticache_replication_group.client.port
 }
+
+# =============================================================================
+# Secrets Manager ARN Outputs (for ECS task definition secret injection)
+# =============================================================================
+
+output "secret_rds_master_password_arn" {
+  description = "Secrets Manager ARN for RDS master password — injected into Client Service ECS task"
+  value       = aws_secretsmanager_secret.rds_master_password.arn
+}
+
+output "secret_redis_account_auth_arn" {
+  description = "Secrets Manager ARN for Account Redis AUTH token — injected into Account Service ECS task"
+  value       = aws_secretsmanager_secret.redis_account_auth.arn
+}
+
+output "secret_redis_client_auth_arn" {
+  description = "Secrets Manager ARN for Client Redis AUTH token — injected into Client Service ECS task"
+  value       = aws_secretsmanager_secret.redis_client_auth.arn
+}
+
+# =============================================================================
+# RDS Cluster Username Output
+# =============================================================================
+
+output "rds_cluster_master_username" {
+  description = "Aurora master username — single source of truth for ECS task definition env var"
+  value       = aws_rds_cluster.primary.master_username
+}

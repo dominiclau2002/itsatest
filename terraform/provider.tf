@@ -12,6 +12,11 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    # archive: zips placeholder Lambda handler code for deployment packages (Phase 8).
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
   }
 
   # Remote state backend — S3 bucket and DynamoDB lock table must be bootstrapped
