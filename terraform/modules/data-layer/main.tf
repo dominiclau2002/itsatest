@@ -253,6 +253,18 @@ resource "aws_dynamodb_table" "logs" {
     type = "S"
   }
 
+  attribute {
+    name = "client_id"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "ClientIndex"
+    hash_key        = "client_id"
+    range_key       = "datetime"
+    projection_type = "ALL"
+  }
+
   ttl {
     attribute_name = "expires_at"
     enabled        = true

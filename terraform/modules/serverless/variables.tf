@@ -127,3 +127,12 @@ variable "sftp_schedule_expression" {
   type        = string
   default     = "rate(1 hour)"
 }
+
+# =============================================================================
+# Phase 9 — Documents S3 Bucket
+# =============================================================================
+
+variable "s3_documents_bucket_name" {
+  description = "Documents S3 bucket name — injected into Verification Lambda as S3_BUCKET_DOCUMENTS env var (was empty placeholder in Phase 8)"
+  type        = string
+}

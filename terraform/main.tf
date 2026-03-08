@@ -9,7 +9,106 @@
 #   5. storage        — depends on security (kms_s3_arn)
 #   6. serverless     — depends on security + data-layer + storage + auth
 #   7. compute        — depends on vpc-networking + security + data-layer + auth + serverless (SQS URL)
+#   8. cdn            — depends on storage + compute (ACM certs live at root to break circular dep)
+#
+# Phase 9 ACM certs: placed at root (not inside cdn module) to break the circular
+# dependency: cdn needs cert ARN → compute needs cert ARN → cdn uses compute ALB DNS.
+# Root-level certs are inputs to both cdn and compute modules with no circular dep.
 # =============================================================================
+
+
+# =============================================================================
+# Phase 9: ACM Certificates (Root-Level — Break Circular Dependency)
+#
+# Two certificates per domain:
+#   cloudfront — us-east-1 (required for CloudFront; global service uses us-east-1 WAF/ACM)
+#   alb        — ap-southeast-1 (ALB HTTPS listener must use same-region cert)
+#
+# Validation records created in Route 53 via data.aws_route53_zone.main.
+# aws_acm_certificate_validation blocks Terraform until DNS validation completes,
+# preventing CloudFront/ALB from attaching a PENDING_VALIDATION certificate.
+#
+# Both certs use the same DNS CNAME records (same domain); allow_overwrite = true
+# prevents duplicate record errors when both certs issue the same validation record.
+# =============================================================================
+
+data "aws_route53_zone" "main" {
+  count        = var.domain_name != "" ? 1 : 0
+  name         = var.domain_name
+  private_zone = false
+}
+
+# CloudFront ACM certificate — must be in us-east-1 (CloudFront requirement)
+resource "aws_acm_certificate" "cloudfront" {
+  count                     = var.domain_name != "" ? 1 : 0
+  provider                  = aws.us_east_1
+  domain_name               = var.domain_name
+  subject_alternative_names = ["www.${var.domain_name}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name      = "${var.project_name}-${var.environment}-cert-cloudfront"
+    Component = "acm"
+  }
+}
+
+# ALB ACM certificate — ap-southeast-1 (same region as ALB)
+resource "aws_acm_certificate" "alb" {
+  count                     = var.domain_name != "" ? 1 : 0
+  domain_name               = var.domain_name
+  subject_alternative_names = ["www.${var.domain_name}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name      = "${var.project_name}-${var.environment}-cert-alb"
+    Component = "acm"
+  }
+}
+
+# Route 53 DNS validation records — shared by both certs (same domain = same CNAME record)
+locals {
+  domain_validation_options = var.domain_name != "" ? {
+    for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      type   = dvo.resource_record_type
+      record = dvo.resource_record_value
+    }
+  } : {}
+}
+
+resource "aws_route53_record" "acm_validation" {
+  for_each        = local.domain_validation_options
+  zone_id         = data.aws_route53_zone.main[0].zone_id
+  name            = each.value.name
+  type            = each.value.type
+  ttl             = 60
+  records         = [each.value.record]
+  allow_overwrite = true
+}
+
+# Wait for CloudFront cert validation before passing ARN to cdn module
+resource "aws_acm_certificate_validation" "cloudfront" {
+  count                   = var.domain_name != "" ? 1 : 0
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.cloudfront[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
+# Wait for ALB cert validation before passing ARN to compute module
+resource "aws_acm_certificate_validation" "alb" {
+  count                   = var.domain_name != "" ? 1 : 0
+  certificate_arn         = aws_acm_certificate.alb[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
 
 module "vpc-networking" {
   source = "./modules/vpc-networking"
@@ -105,8 +204,9 @@ module "serverless" {
   dynamodb_table_users_name        = module.data-layer.dynamodb_table_users_name
   dynamodb_table_transactions_name = module.data-layer.dynamodb_table_transactions_name
 
-  # Storage — S3 SFTP bucket
-  s3_sftp_bucket_name = module.storage.s3_sftp_bucket_name
+  # Storage — S3 SFTP bucket + Phase 9 Documents bucket
+  s3_sftp_bucket_name      = module.storage.s3_sftp_bucket_name
+  s3_documents_bucket_name = module.storage.s3_documents_bucket_name
 
   # Auth — Cognito + SES
   cognito_user_pool_id = module.auth.cognito_user_pool_id
@@ -181,4 +281,32 @@ module "compute" {
 
   # Phase 8 — SQS Logging queue URL from serverless module
   sqs_queue_logging_url = module.serverless.sqs_queue_logging_url
+
+  # Phase 9 — HTTPS listener + Lambda routing
+  domain_name             = var.domain_name
+  acm_cert_alb_arn        = var.domain_name != "" ? aws_acm_certificate_validation.alb[0].certificate_arn : ""
+  lambda_verification_arn = module.serverless.lambda_verification_arn
+  lambda_user_arn         = module.serverless.lambda_user_arn
+}
+
+module "cdn" {
+  source = "./modules/cdn"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  project_name                   = var.project_name
+  environment                    = var.environment
+  aws_region                     = var.aws_region
+  s3_frontend_bucket_id          = module.storage.s3_frontend_bucket_id
+  s3_frontend_bucket_arn         = module.storage.s3_frontend_bucket_arn
+  s3_frontend_bucket_domain_name = module.storage.s3_frontend_bucket_domain_name
+  alb_dns_name                   = module.compute.alb_dns_name
+  alb_zone_id                    = module.compute.alb_zone_id
+  domain_name                    = var.domain_name
+  cloudfront_price_class         = var.cloudfront_price_class
+  acm_cert_cloudfront_arn        = var.domain_name != "" ? aws_acm_certificate_validation.cloudfront[0].certificate_arn : ""
+  route53_zone_id                = var.domain_name != "" ? data.aws_route53_zone.main[0].zone_id : ""
 }

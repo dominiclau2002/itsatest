@@ -5,6 +5,9 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.40"
+      # configuration_aliases required so the cdn module can declare aws.us_east_1
+      # for WAF Web ACL creation (CloudFront WAF must be in us-east-1)
+      configuration_aliases = [aws.us_east_1]
     }
     # random: generates the RDS master password and Redis AUTH tokens.
     # These are created once and stored in Secrets Manager — not regenerated on each apply.
@@ -32,11 +35,31 @@ terraform {
   }
 }
 
+# Default provider — ap-southeast-1 for all resources except WAF (us-east-1)
 provider "aws" {
   region  = var.aws_region
   profile = var.profile
 
   # Default tags to apply to all resources
+  default_tags {
+    tags = {
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+      Project     = var.project_name
+      CostCenter  = "CS301"
+      CreatedDate = "2026-02-21"
+    }
+  }
+}
+
+# us-east-1 provider — required for CloudFront WAF Web ACL (scope = CLOUDFRONT).
+# WAF ACLs with scope=CLOUDFRONT must be created in us-east-1 regardless of
+# the distribution's global nature. Using any other region is a hard API error.
+provider "aws" {
+  alias   = "us_east_1"
+  region  = "us-east-1"
+  profile = var.profile
+
   default_tags {
     tags = {
       Environment = var.environment

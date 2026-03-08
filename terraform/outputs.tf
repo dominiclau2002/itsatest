@@ -427,3 +427,51 @@ output "eventbridge_transaction_review_arn" {
   description = "EventBridge transaction-for-review event rule ARN"
   value       = module.serverless.eventbridge_transaction_review_arn
 }
+
+# =============================================================================
+# Phase 9: Frontend & CDN Outputs
+# =============================================================================
+
+# --- S3 Bucket Outputs ---
+
+output "s3_bucket_documents_name" {
+  description = "Documents S3 bucket name — injected into Verification Lambda as S3_BUCKET_DOCUMENTS"
+  value       = module.storage.s3_documents_bucket_name
+}
+
+output "s3_bucket_documents_arn" {
+  description = "Documents S3 bucket ARN"
+  value       = module.storage.s3_documents_bucket_arn
+}
+
+output "s3_bucket_frontend_id" {
+  description = "Frontend S3 bucket ID (name) — deploy compiled React SPA assets here"
+  value       = module.storage.s3_frontend_bucket_id
+}
+
+output "s3_bucket_frontend_arn" {
+  description = "Frontend S3 bucket ARN"
+  value       = module.storage.s3_frontend_bucket_arn
+}
+
+# --- CloudFront Outputs ---
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID — required for cache invalidation after frontend deployments"
+  value       = module.cdn.cloudfront_distribution_id
+}
+
+output "cloudfront_distribution_arn" {
+  description = "CloudFront distribution ARN"
+  value       = module.cdn.cloudfront_distribution_arn
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain name (e.g. d1234.cloudfront.net) — primary access URL until custom domain configured"
+  value       = module.cdn.cloudfront_domain_name
+}
+
+output "waf_web_acl_arn" {
+  description = "WAF Web ACL ARN (us-east-1) for CloudFront protection"
+  value       = module.cdn.waf_web_acl_arn
+}

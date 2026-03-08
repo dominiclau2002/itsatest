@@ -249,9 +249,8 @@ resource "aws_lambda_function" "verification" {
       ENVIRONMENT          = var.environment
       AWS_REGION           = var.aws_region
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
-      # S3_BUCKET_DOCUMENTS left empty — Documents S3 bucket created in Phase 9
-      S3_BUCKET_DOCUMENTS = ""
-      SES_SENDER_EMAIL    = var.ses_sender_email
+      S3_BUCKET_DOCUMENTS  = var.s3_documents_bucket_name
+      SES_SENDER_EMAIL     = var.ses_sender_email
     }
   }
 

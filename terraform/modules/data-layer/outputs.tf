@@ -107,3 +107,8 @@ output "rds_cluster_master_username" {
   description = "Aurora master username — single source of truth for ECS task definition env var"
   value       = aws_rds_cluster.primary.master_username
 }
+
+output "dynamodb_table_logs_arn" {
+  description = "DynamoDB Logs table ARN — exported for reference; security module constructs ARN locally via naming convention to avoid circular dependency"
+  value       = aws_dynamodb_table.logs.arn
+}

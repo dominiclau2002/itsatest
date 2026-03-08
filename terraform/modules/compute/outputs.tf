@@ -75,3 +75,8 @@ output "target_group_client_arn" {
   description = "ALB target group ARN for Client Service"
   value       = aws_lb_target_group.client.arn
 }
+
+output "alb_https_listener_arn" {
+  description = "HTTPS listener ARN — null when no custom domain configured; used by cdn module for certificate association"
+  value       = length(aws_lb_listener.https) > 0 ? aws_lb_listener.https[0].arn : null
+}

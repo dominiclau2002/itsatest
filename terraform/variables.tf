@@ -219,3 +219,24 @@ variable "sftp_schedule_expression" {
   default     = "rate(1 hour)"
 }
 
+# =============================================================================
+# Phase 9: Frontend & CDN Variables
+# =============================================================================
+
+variable "domain_name" {
+  description = "Custom domain name for CloudFront and ALB (e.g. crm.example.com). Empty string (default) skips HTTPS listeners, ACM certs, and Route 53 records — CDN uses CloudFront default certificate."
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_price_class" {
+  description = "CloudFront price class controlling which edge locations serve content. PriceClass_All = global coverage (default); PriceClass_200 = excludes South America and Australia; PriceClass_100 = North America and Europe only."
+  type        = string
+  default     = "PriceClass_All"
+
+  validation {
+    condition     = contains(["PriceClass_100", "PriceClass_200", "PriceClass_All"], var.cloudfront_price_class)
+    error_message = "cloudfront_price_class must be one of: PriceClass_100, PriceClass_200, PriceClass_All."
+  }
+}
+
