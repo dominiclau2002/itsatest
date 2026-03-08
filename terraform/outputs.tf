@@ -475,3 +475,17 @@ output "waf_web_acl_arn" {
   description = "WAF Web ACL ARN (us-east-1) for CloudFront protection"
   value       = module.cdn.waf_web_acl_arn
 }
+
+# =============================================================================
+# Phase 10: Monitoring Outputs
+# =============================================================================
+
+output "cloudtrail_arn" {
+  description = "CloudTrail trail ARN — management event audit log for all AWS API calls"
+  value       = module.monitoring.cloudtrail_arn
+}
+
+output "sns_alarms_topic_arn" {
+  description = "SNS topic ARN for CloudWatch alarm notifications — add subscriptions here for PagerDuty, Slack, etc."
+  value       = module.monitoring.sns_alarms_topic_arn
+}

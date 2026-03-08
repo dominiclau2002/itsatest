@@ -215,6 +215,10 @@ module "serverless" {
   # Config (with defaults — override in tfvars)
   lambda_log_retention_days = var.lambda_log_retention_days
   sftp_schedule_expression  = var.sftp_schedule_expression
+
+  # Phase 10 — DynamoDB Stream ARNs for event source mappings
+  dynamodb_stream_transactions_arn = module.data-layer.dynamodb_table_transactions_stream_arn
+  dynamodb_stream_accounts_arn     = module.data-layer.dynamodb_table_accounts_stream_arn
 }
 
 module "compute" {
@@ -309,4 +313,52 @@ module "cdn" {
   cloudfront_price_class         = var.cloudfront_price_class
   acm_cert_cloudfront_arn        = var.domain_name != "" ? aws_acm_certificate_validation.cloudfront[0].certificate_arn : ""
   route53_zone_id                = var.domain_name != "" ? data.aws_route53_zone.main[0].zone_id : ""
+}
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  # Core identity
+  aws_region   = var.aws_region
+  project_name = var.project_name
+  environment  = var.environment
+
+  # VPC — for VPC Flow Logs
+  vpc_id = module.vpc-networking.vpc_id
+
+  # ECS alarm dimensions (from compute module)
+  ecs_cluster_name         = module.compute.ecs_cluster_name
+  ecs_account_service_name = module.compute.ecs_account_primary_service_name
+  ecs_client_service_name  = module.compute.ecs_client_primary_service_name
+
+  # ALB alarm dimension — must use arn_suffix, not full ARN
+  alb_arn_suffix = module.compute.alb_arn_suffix
+
+  # RDS alarm dimension (from data-layer module)
+  rds_cluster_identifier = module.data-layer.rds_cluster_identifier
+
+  # DynamoDB alarm dimensions (all 4 table names for SystemErrors coverage)
+  dynamodb_table_names = [
+    module.data-layer.dynamodb_table_accounts_name,
+    module.data-layer.dynamodb_table_logs_name,
+    module.data-layer.dynamodb_table_users_name,
+    module.data-layer.dynamodb_table_transactions_name,
+  ]
+
+  # ElastiCache alarm dimension (from data-layer module)
+  elasticache_account_cluster_id = module.data-layer.elasticache_account_cluster_id
+
+  # SQS alarm dimensions (from serverless module)
+  sqs_fraud_queue_name = module.serverless.sqs_fraud_notification_queue_name
+  sqs_fraud_dlq_name   = module.serverless.sqs_fraud_notification_dlq_name
+
+  # Lambda alarm dimensions (from serverless module)
+  lambda_verification_name      = module.serverless.lambda_verification_function_name
+  lambda_anomaly_detection_name = module.serverless.lambda_anomaly_detection_function_name
+  lambda_notification_name      = module.serverless.lambda_notification_function_name
+  lambda_logging_name           = module.serverless.lambda_logging_function_name
+
+  # Optional — alarm email subscription and feature flags
+  alarm_email            = var.alarm_email
+  enable_alb_access_logs = false # Set true in tfvars to enable ALB access log delivery to S3
 }

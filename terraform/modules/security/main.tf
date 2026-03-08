@@ -1591,6 +1591,17 @@ data "aws_iam_policy_document" "lambda_policy_anomaly_detection" {
   }
 
   statement {
+    # Required for destination_config on_failure in the Accounts DynamoDB stream → Anomaly Detection
+    # Lambda event source mapping (Phase 10). The mapping routes permanently failed batches to the DLQ.
+    sid     = "SQSSendFraudDLQ"
+    effect  = "Allow"
+    actions = ["sqs:SendMessage"]
+    resources = [
+      "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_fraud_notification_name}-dlq",
+    ]
+  }
+
+  statement {
     sid    = "KMSAccessDynamoDB"
     effect = "Allow"
     actions = [

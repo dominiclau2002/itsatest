@@ -240,3 +240,14 @@ variable "cloudfront_price_class" {
   }
 }
 
+
+# =============================================================================
+# Phase 10: Monitoring Variables
+# =============================================================================
+
+variable "alarm_email" {
+  description = "Email address for CloudWatch alarm SNS notifications. Empty string (default) disables email subscription — alarms still fire to SNS topic."
+  type        = string
+  default     = ""
+}
+

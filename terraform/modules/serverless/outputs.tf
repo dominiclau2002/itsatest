@@ -86,3 +86,38 @@ output "eventbridge_transaction_review_arn" {
   description = "ARN of the transaction-review EventBridge rule"
   value       = aws_cloudwatch_event_rule.transaction_review.arn
 }
+
+
+# =============================================================================
+# Phase 10 — Function Names (needed by monitoring module alarm dimensions)
+# =============================================================================
+
+output "lambda_verification_function_name" {
+  description = "Verification Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  value       = aws_lambda_function.verification.function_name
+}
+
+output "lambda_anomaly_detection_function_name" {
+  description = "Anomaly Detection Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  value       = aws_lambda_function.anomaly_detection.function_name
+}
+
+output "lambda_notification_function_name" {
+  description = "Notification Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  value       = aws_lambda_function.notification.function_name
+}
+
+output "lambda_logging_function_name" {
+  description = "Logging Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  value       = aws_lambda_function.logging.function_name
+}
+
+output "sqs_fraud_notification_queue_name" {
+  description = "Fraud Notification SQS queue name — used as CloudWatch alarm QueueName dimension"
+  value       = aws_sqs_queue.fraud_notification.name
+}
+
+output "sqs_fraud_notification_dlq_name" {
+  description = "Fraud Notification dead-letter queue name — used as CloudWatch alarm QueueName dimension"
+  value       = aws_sqs_queue.fraud_notification_dlq.name
+}

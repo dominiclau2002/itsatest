@@ -112,3 +112,18 @@ output "dynamodb_table_logs_arn" {
   description = "DynamoDB Logs table ARN — exported for reference; security module constructs ARN locally via naming convention to avoid circular dependency"
   value       = aws_dynamodb_table.logs.arn
 }
+
+
+# =============================================================================
+# Phase 10 — Monitoring Module Inputs
+# =============================================================================
+
+output "rds_cluster_identifier" {
+  description = "Aurora cluster identifier — used as CloudWatch alarm DBClusterIdentifier dimension"
+  value       = aws_rds_cluster.primary.cluster_identifier
+}
+
+output "elasticache_account_cluster_id" {
+  description = "ElastiCache Account replication group ID — used as CloudWatch alarm ReplicationGroupId dimension"
+  value       = aws_elasticache_replication_group.account.id
+}

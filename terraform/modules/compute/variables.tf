@@ -297,3 +297,20 @@ variable "lambda_user_arn" {
   description = "User Lambda function ARN — registered as ALB Lambda target group target (path /api/users/*, priority 300)"
   type        = string
 }
+
+
+# =============================================================================
+# Phase 10 — ECS Auto Scaling Bounds
+# =============================================================================
+
+variable "ecs_min_capacity" {
+  description = "Minimum ECS service task count per AZ service instance for auto-scaling (floor when scaling in)"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_max_capacity" {
+  description = "Maximum ECS service task count per AZ service instance for auto-scaling (ceiling when scaling out)"
+  type        = number
+  default     = 3
+}

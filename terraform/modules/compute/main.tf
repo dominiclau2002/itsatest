@@ -883,3 +883,132 @@ resource "aws_ecs_service" "client_secondary" {
     Component = "ecs-service"
   }
 }
+
+
+# =============================================================================
+# ECS Application Auto Scaling — Phase 10
+#
+# Adds target-tracking scaling policies (CPU 60% target) to all 4 ECS services.
+# Each service scales independently between ecs_min_capacity and ecs_max_capacity.
+# Target-tracking is preferred over step scaling for ECS because AWS manages the
+# scale-out and scale-in thresholds automatically.
+#
+# scale_in_cooldown = 300s: wait 5 min before scaling in after a spike subsides,
+# preventing flapping when load oscillates around the threshold.
+# scale_out_cooldown = 60s: scale out quickly (1 min) to absorb sudden load.
+#
+# resource_id format must be "service/<cluster-name>/<service-name>" exactly —
+# any deviation causes silent scaling failure without a Terraform error.
+# =============================================================================
+
+# --- Account Service Primary (AZ-1a) ---
+
+resource "aws_appautoscaling_target" "account_primary" {
+  max_capacity       = var.ecs_max_capacity
+  min_capacity       = var.ecs_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.account_primary.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+  depends_on         = [aws_ecs_service.account_primary]
+}
+
+resource "aws_appautoscaling_policy" "account_primary_cpu" {
+  name               = "${var.project_name}-${var.environment}-asp-account-primary"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.account_primary.resource_id
+  scalable_dimension = aws_appautoscaling_target.account_primary.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.account_primary.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 60.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
+
+# --- Account Service Secondary (AZ-1b) ---
+
+resource "aws_appautoscaling_target" "account_secondary" {
+  max_capacity       = var.ecs_max_capacity
+  min_capacity       = var.ecs_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.account_secondary.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+  depends_on         = [aws_ecs_service.account_secondary]
+}
+
+resource "aws_appautoscaling_policy" "account_secondary_cpu" {
+  name               = "${var.project_name}-${var.environment}-asp-account-secondary"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.account_secondary.resource_id
+  scalable_dimension = aws_appautoscaling_target.account_secondary.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.account_secondary.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 60.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
+
+# --- Client Service Primary (AZ-1a) ---
+
+resource "aws_appautoscaling_target" "client_primary" {
+  max_capacity       = var.ecs_max_capacity
+  min_capacity       = var.ecs_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.client_primary.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+  depends_on         = [aws_ecs_service.client_primary]
+}
+
+resource "aws_appautoscaling_policy" "client_primary_cpu" {
+  name               = "${var.project_name}-${var.environment}-asp-client-primary"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.client_primary.resource_id
+  scalable_dimension = aws_appautoscaling_target.client_primary.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.client_primary.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 60.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
+
+# --- Client Service Secondary (AZ-1b) ---
+
+resource "aws_appautoscaling_target" "client_secondary" {
+  max_capacity       = var.ecs_max_capacity
+  min_capacity       = var.ecs_min_capacity
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.client_secondary.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+  depends_on         = [aws_ecs_service.client_secondary]
+}
+
+resource "aws_appautoscaling_policy" "client_secondary_cpu" {
+  name               = "${var.project_name}-${var.environment}-asp-client-secondary"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.client_secondary.resource_id
+  scalable_dimension = aws_appautoscaling_target.client_secondary.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.client_secondary.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = 60.0
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
