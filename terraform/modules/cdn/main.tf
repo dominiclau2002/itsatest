@@ -36,6 +36,99 @@ terraform {
 # from this specific distribution and reject direct S3 URL access.
 # =============================================================================
 
+locals {
+  cloudfront_logs_bucket_name = "${var.project_name}-${var.environment}-bucket-cf-logs"
+}
+
+
+# =============================================================================
+# CloudFront Access Logs S3 Bucket — CKV_AWS_86
+#
+# CloudFront delivers access logs to an S3 bucket. Log delivery uses the
+# S3 Log Delivery group (a canned ACL), which requires:
+#   - BucketOwnerPreferred ownership controls (enables ACL usage)
+#   - log-delivery-write canned ACL (grants the Log Delivery group write access)
+#
+# block_public_acls = true is safe here — the log-delivery-write ACL grants
+# access to the S3 Log Delivery group (NOT AllUsers/AuthenticatedUsers), so
+# it is not considered a public ACL and is not blocked.
+#
+# CloudFront log delivery does NOT support KMS — bucket must use AES256.
+# The bucket uses the default provider (ap-southeast-1); CloudFront delivers
+# logs to any region.
+# =============================================================================
+
+resource "aws_s3_bucket" "cloudfront_logs" {
+  bucket = local.cloudfront_logs_bucket_name
+
+  tags = {
+    Name      = local.cloudfront_logs_bucket_name
+    Component = "cloudfront-logs"
+  }
+}
+
+# CloudFront log delivery does NOT support KMS — must use AES256
+resource "aws_s3_bucket_server_side_encryption_configuration" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+
+  # block_public_acls = true is safe: log-delivery-write is NOT a public ACL
+  # (it grants to S3 Log Delivery group, not AllUsers/AuthenticatedUsers)
+  block_public_acls       = true
+  ignore_public_acls      = true
+  block_public_policy     = true
+  restrict_public_buckets = true
+}
+
+# BucketOwnerPreferred required to enable ACL usage (needed for log-delivery-write)
+resource "aws_s3_bucket_ownership_controls" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# log-delivery-write canned ACL grants S3 Log Delivery group write access
+# depends_on ensures ownership controls are applied before the ACL is set
+resource "aws_s3_bucket_acl" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+  acl    = "log-delivery-write"
+
+  depends_on = [aws_s3_bucket_ownership_controls.cloudfront_logs]
+}
+
+# Expire CloudFront logs after 90 days — operational data, shorter than audit logs
+resource "aws_s3_bucket_lifecycle_configuration" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+
+  rule {
+    id     = "expire-cloudfront-logs"
+    status = "Enabled"
+
+    filter {} # Empty filter = apply to all objects in the bucket
+
+    expiration {
+      days = 90
+    }
+
+    # CKV_AWS_300: abort incomplete multipart uploads after 7 days
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${var.project_name}-${var.environment}-oac-frontend"
   description                       = "OAC for CRM frontend S3 bucket — restricts S3 access to this CloudFront distribution only via SigV4 signing"
@@ -183,6 +276,38 @@ resource "aws_wafv2_web_acl" "cloudfront" {
 
 
 # =============================================================================
+# WAF Web ACL Logging — CKV2_AWS_31
+#
+# WAF CLOUDFRONT-scoped resources must be in us-east-1. Both the log group and
+# the logging configuration use provider = aws.us_east_1.
+#
+# WAF log group name MUST start with "aws-waf-logs-" — AWS hard requirement;
+# any other prefix is rejected by the WAF API at apply time.
+#
+# No KMS on this log group: the existing kms_cloudwatch_arn key lives in
+# ap-southeast-1 and cannot encrypt a log group in us-east-1. A dedicated
+# us-east-1 KMS key would be required for at-rest encryption — deferred.
+# =============================================================================
+
+resource "aws_cloudwatch_log_group" "waf" {
+  provider          = aws.us_east_1
+  name              = "aws-waf-logs-${var.project_name}-${var.environment}"
+  retention_in_days = 365 # CKV_AWS_338: minimum 1 year for compliance
+
+  tags = {
+    Name      = "aws-waf-logs-${var.project_name}-${var.environment}"
+    Component = "waf"
+  }
+}
+
+resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
+  provider                = aws.us_east_1
+  log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
+  resource_arn            = aws_wafv2_web_acl.cloudfront.arn
+}
+
+
+# =============================================================================
 # CloudFront Distribution
 #
 # Dual-origin setup:
@@ -214,6 +339,15 @@ resource "aws_cloudfront_distribution" "main" {
 
   # Custom domain aliases — empty when no domain configured (uses CloudFront default cert)
   aliases = var.domain_name != "" ? [var.domain_name, "www.${var.domain_name}"] : []
+
+  # CKV_AWS_86: CloudFront access logging to the dedicated S3 bucket.
+  # logging_config.bucket must be the bucket_domain_name (format: bucket.s3.amazonaws.com),
+  # NOT the bucket ID — CloudFront rejects bucket IDs for the logging_config.bucket attribute.
+  logging_config {
+    include_cookies = false
+    bucket          = aws_s3_bucket.cloudfront_logs.bucket_domain_name
+    prefix          = "cloudfront/"
+  }
 
   # --- Origin 1: S3 Frontend ---
   # OAC signs all requests; S3 bucket policy (below) validates the OAC ARN

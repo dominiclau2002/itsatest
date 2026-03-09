@@ -212,6 +212,9 @@ module "serverless" {
   cognito_user_pool_id = module.auth.cognito_user_pool_id
   ses_sender_email     = var.ses_sender_email
 
+  # KMS key for Lambda log group encryption (from security module)
+  kms_cloudwatch_arn = module.security.kms_cloudwatch_arn
+
   # Config (with defaults — override in tfvars)
   lambda_log_retention_days = var.lambda_log_retention_days
   sftp_schedule_expression  = var.sftp_schedule_expression
@@ -236,6 +239,10 @@ module "compute" {
   public_subnet_2_id      = module.vpc-networking.public_subnet_2_id
   private_app_subnet_1_id = module.vpc-networking.private_app_subnet_1_id
   private_app_subnet_2_id = module.vpc-networking.private_app_subnet_2_id
+
+  # KMS keys (from security module)
+  kms_s3_arn         = module.security.kms_s3_arn         # ECR image layer encryption
+  kms_cloudwatch_arn = module.security.kms_cloudwatch_arn # ECS log group encryption
 
   # Security groups — ALB + 4 ECS task SGs (one per service per AZ)
   sg_alb_id                   = module.security.sg_alb_id
@@ -291,6 +298,9 @@ module "compute" {
   acm_cert_alb_arn        = var.domain_name != "" ? aws_acm_certificate_validation.alb[0].certificate_arn : ""
   lambda_verification_arn = module.serverless.lambda_verification_arn
   lambda_user_arn         = module.serverless.lambda_user_arn
+
+  # ALB access logs bucket (from storage module — avoids circular dep with monitoring)
+  alb_logs_bucket_name = module.storage.alb_logs_bucket_name
 }
 
 module "cdn" {
@@ -358,7 +368,10 @@ module "monitoring" {
   lambda_notification_name      = module.serverless.lambda_notification_function_name
   lambda_logging_name           = module.serverless.lambda_logging_function_name
 
-  # Optional — alarm email subscription and feature flags
-  alarm_email            = var.alarm_email
-  enable_alb_access_logs = false # Set true in tfvars to enable ALB access log delivery to S3
+  # KMS keys for log group encryption + CloudTrail S3 + SNS encryption (from security module)
+  kms_cloudwatch_arn = module.security.kms_cloudwatch_arn
+  kms_s3_arn         = module.security.kms_s3_arn
+
+  # Optional — alarm email subscription
+  alarm_email = var.alarm_email
 }

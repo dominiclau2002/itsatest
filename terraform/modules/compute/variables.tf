@@ -213,6 +213,21 @@ variable "cognito_user_pool_id" {
 
 
 # =============================================================================
+# KMS Keys (from security module)
+# =============================================================================
+
+variable "kms_s3_arn" {
+  description = "ARN of the S3 KMS key — used for ECR repository encryption (ECR stores image layers as S3 objects)"
+  type        = string
+}
+
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key — used to encrypt ECS log groups at rest"
+  type        = string
+}
+
+
+# =============================================================================
 # Tunable Operational Parameters (defaults suitable for dev)
 # =============================================================================
 
@@ -295,6 +310,16 @@ variable "lambda_verification_arn" {
 
 variable "lambda_user_arn" {
   description = "User Lambda function ARN — registered as ALB Lambda target group target (path /api/users/*, priority 300)"
+  type        = string
+}
+
+
+# =============================================================================
+# ALB Access Logs
+# =============================================================================
+
+variable "alb_logs_bucket_name" {
+  description = "S3 bucket name for ALB access logs — created in storage module to avoid circular dependency with monitoring (CKV_AWS_91)"
   type        = string
 }
 

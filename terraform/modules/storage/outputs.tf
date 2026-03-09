@@ -32,3 +32,8 @@ output "s3_frontend_bucket_domain_name" {
   description = "Frontend S3 bucket regional domain name — must use regional form (bucket_regional_domain_name) for OAC; global form (bucket_domain_name) causes runtime 403"
   value       = aws_s3_bucket.frontend.bucket_regional_domain_name
 }
+
+output "alb_logs_bucket_name" {
+  description = "ALB access logs S3 bucket name — passed to compute module for access_logs block (CKV_AWS_91)"
+  value       = aws_s3_bucket.alb_logs.id
+}

@@ -97,6 +97,15 @@ resource "aws_rds_cluster" "primary" {
   skip_final_snapshot       = var.rds_skip_final_snapshot
   final_snapshot_identifier = "${var.project_name}-${var.environment}-aurora-final-snapshot"
 
+  copy_tags_to_snapshot = true # CKV_AWS_313: propagate resource tags to automated snapshots for cost allocation
+
+  # CKV_AWS_162: IAM authentication as an additional layer alongside password auth;
+  # enables fine-grained DB access control via IAM roles (not a replacement for passwords)
+  iam_database_authentication_enabled = true
+
+  # CKV_AWS_324: export PostgreSQL and upgrade logs to CloudWatch for audit and diagnostics
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+
   deletion_protection = var.rds_deletion_protection
 
   tags = {

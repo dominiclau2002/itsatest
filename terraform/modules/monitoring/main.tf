@@ -19,7 +19,6 @@
 
 locals {
   cloudtrail_bucket_name = "${var.project_name}-${var.environment}-bucket-cloudtrail"
-  alb_logs_bucket_name   = "${var.project_name}-${var.environment}-bucket-alb-logs"
   sns_topic_name         = "${var.project_name}-${var.environment}-topic-alarms"
 }
 
@@ -83,6 +82,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
     expiration {
       days = 365
     }
+
+    # CKV_AWS_300: abort incomplete multipart uploads after 7 days to prevent
+    # orphaned upload parts from accumulating storage costs indefinitely
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
 
@@ -130,6 +135,7 @@ resource "aws_s3_bucket_policy" "cloudtrail" {
 resource "aws_cloudwatch_log_group" "cloudtrail" {
   name              = "/aws/cloudtrail/${var.project_name}-${var.environment}"
   retention_in_days = var.cloudtrail_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn # Encrypts log events at rest with CMK (CKV_AWS_158)
 
   tags = {
     Name      = "/aws/cloudtrail/${var.project_name}-${var.environment}"
@@ -178,14 +184,22 @@ resource "aws_iam_role_policy" "cloudtrail_cw" {
 }
 
 # CloudTrail trail — management events only (data events excluded to avoid high
-# volume/cost in dev). Single-region scoping. Log file validation enabled so
-# any tampering with S3-delivered log files can be detected cryptographically.
+# volume/cost in dev). Multi-region enabled for full coverage (CKV_AWS_67).
+# Log file validation enabled so any tampering with S3 log files can be detected.
+# KMS encryption applied to S3 log files using the shared S3 CMK (CKV_AWS_35).
+# SNS notification enables real-time alerts on new log deliveries (CKV_AWS_252).
 resource "aws_cloudtrail" "main" {
   name                          = "${var.project_name}-${var.environment}-cloudtrail"
   s3_bucket_name                = aws_s3_bucket.cloudtrail.id
-  include_global_service_events = true  # IAM, STS, and other global events
-  is_multi_region_trail         = false # Single-region for dev cost control
-  enable_log_file_validation    = true  # Detects tampered/deleted log files
+  include_global_service_events = true # IAM, STS, and other global events
+  is_multi_region_trail         = true # CKV_AWS_67: capture API calls in all regions
+  enable_log_file_validation    = true # Detects tampered/deleted log files cryptographically
+
+  # KMS encryption of S3-delivered log files (CKV_AWS_35)
+  kms_key_id = var.kms_s3_arn
+
+  # SNS notification on new log file delivery — enables real-time alerting (CKV_AWS_252)
+  sns_topic_name = aws_sns_topic.alarms.name
 
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
   cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cw.arn
@@ -213,7 +227,8 @@ resource "aws_cloudtrail" "main" {
 # CloudWatch log group for VPC flow log records
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/vpc/flow-logs/${var.project_name}-${var.environment}"
-  retention_in_days = 30 # Flow logs are high-volume; 30 days balances cost vs. investigation window
+  retention_in_days = 365                    # CKV_AWS_338: minimum 1 year for compliance
+  kms_key_id        = var.kms_cloudwatch_arn # CKV_AWS_158: encrypt at rest with CMK
 
   tags = {
     Name      = "/vpc/flow-logs/${var.project_name}-${var.environment}"
@@ -288,7 +303,8 @@ resource "aws_flow_log" "vpc" {
 # =============================================================================
 
 resource "aws_sns_topic" "alarms" {
-  name = local.sns_topic_name
+  name              = local.sns_topic_name
+  kms_master_key_id = var.kms_cloudwatch_arn # CKV_AWS_26: encrypt SNS messages at rest with CMK
 
   tags = {
     Name      = local.sns_topic_name
@@ -738,86 +754,3 @@ resource "aws_cloudwatch_metric_alarm" "lambda_logging_errors" {
 }
 
 
-# =============================================================================
-# ALB Access Logs Bucket (Optional)
-#
-# Created only when enable_alb_access_logs = true. The bucket ID is returned
-# as an output so the root module can wire it into the ALB access_logs block.
-#
-# ELB service account for ap-southeast-1 = 114774131450 (region-specific;
-# hardcoded per AWS documentation — do not change for this region).
-# =============================================================================
-
-resource "aws_s3_bucket" "alb_logs" {
-  count         = var.enable_alb_access_logs ? 1 : 0
-  bucket        = local.alb_logs_bucket_name
-  force_destroy = false
-
-  tags = {
-    Name      = local.alb_logs_bucket_name
-    Component = "alb-logs"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
-  count  = var.enable_alb_access_logs ? 1 : 0
-  bucket = aws_s3_bucket.alb_logs[0].id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "alb_logs" {
-  count  = var.enable_alb_access_logs ? 1 : 0
-  bucket = aws_s3_bucket.alb_logs[0].id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# Expire ALB access logs after 90 days — shorter than CloudTrail (operational data)
-resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
-  count  = var.enable_alb_access_logs ? 1 : 0
-  bucket = aws_s3_bucket.alb_logs[0].id
-
-  rule {
-    id     = "expire-alb-logs"
-    status = "Enabled"
-
-    filter {} # Empty filter = apply to all objects in the bucket
-
-    expiration {
-      days = 90
-    }
-  }
-}
-
-# Regional ELB service account — resolves to the correct account ID for the
-# current AWS region automatically, avoiding hardcoded region-specific IDs.
-data "aws_elb_service_account" "main" {}
-
-# Bucket policy: Allow the regional ELB service account to deliver access logs.
-resource "aws_s3_bucket_policy" "alb_logs" {
-  count  = var.enable_alb_access_logs ? 1 : 0
-  bucket = aws_s3_bucket.alb_logs[0].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid    = "AllowELBServiceAccountPut"
-      Effect = "Allow"
-      Principal = {
-        AWS = data.aws_elb_service_account.main.arn
-      }
-      Action   = "s3:PutObject"
-      Resource = "${aws_s3_bucket.alb_logs[0].arn}/*"
-    }]
-  })
-
-  depends_on = [aws_s3_bucket_public_access_block.alb_logs]
-}

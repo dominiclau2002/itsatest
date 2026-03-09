@@ -850,7 +850,7 @@ resource "aws_kms_alias" "elasticache" {
 }
 
 resource "aws_kms_key" "s3" {
-  description             = "Customer-managed KMS key for S3 SSE-KMS encryption (SFTP bucket Phase 5; Documents + Frontend buckets Phase 9)"
+  description             = "Customer-managed KMS key for S3 SSE-KMS encryption (SFTP bucket Phase 5; Documents + Frontend buckets Phase 9; CloudTrail S3 log delivery)"
   enable_key_rotation     = true
   deletion_window_in_days = 30
 
@@ -864,6 +864,20 @@ resource "aws_kms_key" "s3" {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
         Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        # CloudTrail requires GenerateDataKey + Decrypt to encrypt its S3 log files
+        Sid    = "CloudTrailS3Encryption"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action = [
+          "kms:GenerateDataKey*",
+          "kms:Decrypt",
+          "kms:DescribeKey",
+        ]
         Resource = "*"
       },
     ]
@@ -922,6 +936,76 @@ resource "aws_kms_key" "secrets_manager" {
 resource "aws_kms_alias" "secrets_manager" {
   name          = "alias/${var.project_name}-${var.environment}-secretsmanager"
   target_key_id = aws_kms_key.secrets_manager.key_id
+}
+
+# CloudWatch Logs KMS key — encrypts ECS, Lambda, CloudTrail, and VPC Flow Log groups.
+# The logs.<region>.amazonaws.com principal requires a Condition scoped to this account
+# and region; without it CloudWatch rejects kms:Encrypt calls at encryption time.
+resource "aws_kms_key" "cloudwatch" {
+  description             = "Customer-managed KMS key for CloudWatch Logs encryption (ECS, Lambda, CloudTrail, VPC Flow Logs)"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "RootAccountAdmin"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        # CloudWatch Logs requires Encrypt/Decrypt/GenerateDataKey to write and read encrypted log events.
+        # Condition scopes this grant to log groups in this account + region only.
+        Sid    = "CloudWatchLogsEncryption"
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.${var.aws_region}.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*"
+          }
+        }
+      },
+      {
+        # SNS requires GenerateDataKey + Decrypt to publish encrypted messages via CloudWatch alarm actions
+        Sid    = "SNSEncryption"
+        Effect = "Allow"
+        Principal = {
+          Service = "sns.amazonaws.com"
+        }
+        Action = [
+          "kms:GenerateDataKey*",
+          "kms:Decrypt",
+          "kms:DescribeKey",
+        ]
+        Resource = "*"
+      },
+    ]
+  })
+
+  tags = {
+    Name      = "${var.project_name}-${var.environment}-kms-cloudwatch"
+    Component = "kms-cloudwatch"
+  }
+}
+
+resource "aws_kms_alias" "cloudwatch" {
+  name          = "alias/${var.project_name}-${var.environment}-cloudwatch"
+  target_key_id = aws_kms_key.cloudwatch.key_id
 }
 
 

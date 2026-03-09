@@ -152,6 +152,7 @@ resource "aws_sqs_queue" "fraud_notification" {
 resource "aws_cloudwatch_log_group" "lambda_verification" {
   name              = local.log_group_lambda_verification
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn # Encrypts log data at rest with CMK (CKV_AWS_158)
 
   tags = {
     Name      = local.log_group_lambda_verification
@@ -163,6 +164,7 @@ resource "aws_cloudwatch_log_group" "lambda_verification" {
 resource "aws_cloudwatch_log_group" "lambda_logging" {
   name              = local.log_group_lambda_logging
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_lambda_logging
@@ -174,6 +176,7 @@ resource "aws_cloudwatch_log_group" "lambda_logging" {
 resource "aws_cloudwatch_log_group" "lambda_user" {
   name              = local.log_group_lambda_user
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_lambda_user
@@ -185,6 +188,7 @@ resource "aws_cloudwatch_log_group" "lambda_user" {
 resource "aws_cloudwatch_log_group" "lambda_sftp_fetch" {
   name              = local.log_group_lambda_sftp_fetch
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_lambda_sftp_fetch
@@ -196,6 +200,7 @@ resource "aws_cloudwatch_log_group" "lambda_sftp_fetch" {
 resource "aws_cloudwatch_log_group" "lambda_anomaly" {
   name              = local.log_group_lambda_anomaly
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_lambda_anomaly
@@ -207,6 +212,7 @@ resource "aws_cloudwatch_log_group" "lambda_anomaly" {
 resource "aws_cloudwatch_log_group" "lambda_notification" {
   name              = local.log_group_lambda_notification
   retention_in_days = var.lambda_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_lambda_notification

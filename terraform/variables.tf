@@ -194,7 +194,7 @@ variable "health_check_path" {
 variable "ecs_log_retention_days" {
   description = "CloudWatch log retention in days for ECS container logs"
   type        = number
-  default     = 30
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
 }
 
 variable "alb_deletion_protection" {
@@ -210,7 +210,7 @@ variable "alb_deletion_protection" {
 variable "lambda_log_retention_days" {
   description = "CloudWatch log retention in days for Lambda function logs"
   type        = number
-  default     = 30
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
 }
 
 variable "sftp_schedule_expression" {

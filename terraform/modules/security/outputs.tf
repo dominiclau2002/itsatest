@@ -81,6 +81,11 @@ output "kms_secrets_manager_arn" {
   value       = aws_kms_key.secrets_manager.arn
 }
 
+output "kms_cloudwatch_arn" {
+  description = "ARN of the customer-managed KMS key for CloudWatch Logs encryption (ECS, Lambda, CloudTrail, VPC Flow Logs, SNS)"
+  value       = aws_kms_key.cloudwatch.arn
+}
+
 # =============================================================================
 # IAM Role ARN Outputs
 # =============================================================================

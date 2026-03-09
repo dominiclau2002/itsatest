@@ -45,7 +45,10 @@ resource "aws_ecr_repository" "account_service" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256" # AWS-managed encryption; no custom KMS key for ECR (cost/complexity trade-off)
+    # KMS encryption using the shared S3 CMK — ECR stores image layers as S3 objects under the hood;
+    # reusing the S3 KMS key avoids an extra key while satisfying CKV_AWS_136 (KMS requirement).
+    encryption_type = "KMS"
+    kms_key         = var.kms_s3_arn
   }
 
   force_delete = false # Prevent accidental repo deletion when images exist
@@ -66,7 +69,8 @@ resource "aws_ecr_repository" "client_service" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256"
+    encryption_type = "KMS"
+    kms_key         = var.kms_s3_arn
   }
 
   force_delete = false
@@ -142,6 +146,7 @@ resource "aws_ecr_lifecycle_policy" "client_service" {
 resource "aws_cloudwatch_log_group" "ecs_account" {
   name              = local.log_group_ecs_account
   retention_in_days = var.ecs_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn # Encrypts log data at rest with CMK (CKV_AWS_158)
 
   tags = {
     Name      = local.log_group_ecs_account
@@ -153,6 +158,7 @@ resource "aws_cloudwatch_log_group" "ecs_account" {
 resource "aws_cloudwatch_log_group" "ecs_client" {
   name              = local.log_group_ecs_client
   retention_in_days = var.ecs_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_ecs_client
@@ -216,6 +222,15 @@ resource "aws_lb" "main" {
   subnets            = [var.public_subnet_1_id, var.public_subnet_2_id]
 
   enable_deletion_protection = var.alb_deletion_protection # Set true in prod tfvars
+
+  # CKV_AWS_91: ALB access logs delivered to the pre-created S3 bucket in the storage module.
+  # Bucket is created in storage (not monitoring) to avoid a circular dependency:
+  # monitoring depends on compute for alarm dimensions; compute cannot depend on monitoring.
+  access_logs {
+    bucket  = var.alb_logs_bucket_name
+    prefix  = "alb"
+    enabled = true
+  }
 
   tags = {
     Name      = local.alb_name

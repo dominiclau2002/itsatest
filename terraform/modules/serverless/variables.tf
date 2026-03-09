@@ -119,7 +119,12 @@ variable "ses_sender_email" {
 variable "lambda_log_retention_days" {
   description = "CloudWatch log retention in days for Lambda functions"
   type        = number
-  default     = 30
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
+}
+
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key — used to encrypt all Lambda log groups at rest (CKV_AWS_158)"
+  type        = string
 }
 
 variable "sftp_schedule_expression" {

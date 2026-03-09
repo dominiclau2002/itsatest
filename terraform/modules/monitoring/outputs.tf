@@ -16,7 +16,3 @@ output "cloudtrail_arn" {
   value       = aws_cloudtrail.main.arn
 }
 
-output "alb_logs_bucket_id" {
-  description = "ALB access logs S3 bucket ID — empty string when enable_alb_access_logs=false"
-  value       = var.enable_alb_access_logs ? aws_s3_bucket.alb_logs[0].id : ""
-}

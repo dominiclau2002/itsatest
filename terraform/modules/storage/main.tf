@@ -9,6 +9,7 @@ locals {
   s3_bucket_sftp_name      = "${var.project_name}-${var.environment}-bucket-sftp"
   s3_bucket_documents_name = "${var.project_name}-${var.environment}-bucket-documents"
   s3_bucket_frontend_name  = "${var.project_name}-${var.environment}-bucket-frontend"
+  s3_bucket_alb_logs_name  = "${var.project_name}-${var.environment}-bucket-alb-logs"
 }
 
 resource "aws_s3_bucket" "sftp" {
@@ -51,6 +52,20 @@ resource "aws_s3_bucket_public_access_block" "sftp" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "sftp" {
   bucket = aws_s3_bucket.sftp.id
+
+  # CKV_AWS_300: abort incomplete multipart uploads bucket-wide after 7 days.
+  # A separate rule with an empty filter is required because CKV_AWS_300 checks for
+  # a global abort rule — the prefix-scoped expiration rule below does not satisfy it.
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+
+    filter {} # Empty filter = apply to all objects (including non-transactions/ prefixes)
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 
   rule {
     id     = "expire-processed-transactions"
@@ -168,4 +183,92 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
   ignore_public_acls      = true
   block_public_policy     = true
   restrict_public_buckets = true
+}
+
+
+# =============================================================================
+# ALB Access Logs S3 Bucket — CKV_AWS_91
+#
+# Receives ALB access logs delivered by the ELB service account. Created in
+# the storage module (not monitoring) so the compute module can reference the
+# bucket name without creating a circular dependency (storage → compute is safe;
+# monitoring → compute exists for alarm dimensions, preventing compute → monitoring).
+#
+# ALB log delivery does NOT support KMS encryption — bucket must use AES256.
+# The ELB service account ARN is resolved via a data source (region-agnostic).
+# =============================================================================
+
+# Regional ELB service account — resolves to the correct account ID for the
+# current AWS region automatically, avoiding hardcoded region-specific IDs.
+data "aws_elb_service_account" "main" {}
+
+resource "aws_s3_bucket" "alb_logs" {
+  bucket        = local.s3_bucket_alb_logs_name
+  force_destroy = false
+
+  tags = {
+    Name      = local.s3_bucket_alb_logs_name
+    Component = "alb-logs"
+  }
+}
+
+# ALB log delivery does NOT support KMS — must use AES256
+resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Expire ALB access logs after 90 days — operational data, shorter retention than audit logs
+resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    id     = "expire-alb-logs"
+    status = "Enabled"
+
+    filter {} # Empty filter = apply to all objects in the bucket
+
+    expiration {
+      days = 90
+    }
+
+    # CKV_AWS_300: abort incomplete multipart uploads to prevent orphaned part accumulation
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+# Bucket policy: Allow the regional ELB service account to deliver access logs.
+resource "aws_s3_bucket_policy" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "AllowELBServiceAccountPut"
+      Effect = "Allow"
+      Principal = {
+        AWS = data.aws_elb_service_account.main.arn
+      }
+      Action   = "s3:PutObject"
+      Resource = "${aws_s3_bucket.alb_logs.arn}/*"
+    }]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.alb_logs]
 }

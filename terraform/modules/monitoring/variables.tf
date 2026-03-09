@@ -150,11 +150,15 @@ variable "alarm_email" {
 variable "cloudtrail_log_retention_days" {
   description = "Retention in days for the CloudTrail CloudWatch log group"
   type        = number
-  default     = 90
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
 }
 
-variable "enable_alb_access_logs" {
-  description = "Whether to create an ALB access logs S3 bucket and enable access log delivery"
-  type        = bool
-  default     = false
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key — encrypts CloudTrail and VPC Flow Log groups (CKV_AWS_158) and the SNS alarms topic (CKV_AWS_26)"
+  type        = string
+}
+
+variable "kms_s3_arn" {
+  description = "ARN of the S3 KMS key — used to encrypt CloudTrail S3 log files (CKV_AWS_35)"
+  type        = string
 }
