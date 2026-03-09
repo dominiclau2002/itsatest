@@ -26,9 +26,6 @@ download-external-modules: true
 # Compact output
 compact: false
 
-# Enable colored output
-color: true
-
 # Quiet mode
 quiet: false
 

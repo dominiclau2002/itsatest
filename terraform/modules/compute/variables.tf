@@ -266,3 +266,51 @@ variable "sqs_queue_logging_url" {
   description = "SQS Logging queue URL — injected into ECS task definitions for audit event publishing"
   type        = string
 }
+
+# =============================================================================
+# Phase 9 — Domain & HTTPS
+# =============================================================================
+
+variable "domain_name" {
+  description = "Custom domain name (e.g. crm.example.com). Empty string keeps HTTP-only listener with 404 default. When set, HTTP listener redirects to HTTPS and a separate HTTPS listener is created."
+  type        = string
+  default     = ""
+}
+
+variable "acm_cert_alb_arn" {
+  description = "ACM certificate ARN (ap-southeast-1) for the ALB HTTPS listener. Required when domain_name is set. Empty string skips HTTPS listener creation."
+  type        = string
+  default     = ""
+}
+
+
+# =============================================================================
+# Phase 9 — Lambda ALB Routing
+# =============================================================================
+
+variable "lambda_verification_arn" {
+  description = "Verification Lambda function ARN — registered as ALB Lambda target group target (path /api/clients/*/verify, priority 150)"
+  type        = string
+}
+
+variable "lambda_user_arn" {
+  description = "User Lambda function ARN — registered as ALB Lambda target group target (path /api/users/*, priority 300)"
+  type        = string
+}
+
+
+# =============================================================================
+# Phase 10 — ECS Auto Scaling Bounds
+# =============================================================================
+
+variable "ecs_min_capacity" {
+  description = "Minimum ECS service task count per AZ service instance for auto-scaling (floor when scaling in)"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_max_capacity" {
+  description = "Maximum ECS service task count per AZ service instance for auto-scaling (ceiling when scaling out)"
+  type        = number
+  default     = 3
+}

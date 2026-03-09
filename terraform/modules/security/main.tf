@@ -53,6 +53,13 @@ locals {
   log_group_lambda_notification = "/aws/lambda/${var.project_name}-${var.environment}-notification"
 }
 
+locals {
+  # ARNs constructed locally using naming convention — avoids circular dependency
+  # (security module is at position 3; data-layer at position 4; security cannot
+  # depend on data-layer outputs)
+  dynamodb_table_logs_arn = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_logs_name}"
+}
+
 
 # =============================================================================
 # Data Sources
@@ -146,7 +153,7 @@ resource "aws_security_group_rule" "alb_ingress_http_cloudfront" {
   protocol          = "tcp"
   prefix_list_ids   = [data.aws_ec2_managed_prefix_list.cloudfront.id]
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP from CloudFront - temporary until ACM certificate in Phase 9"
+  description       = "HTTP from CloudFront edge nodes - retained for redirect responses when HTTPS is configured"
 }
 
 # =============================================================================
@@ -1175,11 +1182,23 @@ data "aws_iam_policy_document" "ecs_task_policy_client" {
       aws_kms_key.dynamodb.arn,
     ]
   }
+
+  statement {
+    sid     = "DynamoDBLogsQueryByClient"
+    effect  = "Allow"
+    actions = ["dynamodb:Query"]
+    resources = [
+      # Allows Client Service to query Logs table by client_id via ClientIndex GSI
+      # ARN constructed locally (Phase 9 Addition B) — naming convention matches data-layer module
+      local.dynamodb_table_logs_arn,
+      "${local.dynamodb_table_logs_arn}/index/ClientIndex",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "ecs_task_policy_client" {
   name        = "${var.project_name}-${var.environment}-policy-ecs-task-client"
-  description = "Runtime permissions for Client Service container: SQS logging only. Client data stored in Aurora RDS — no DynamoDB access."
+  description = "Runtime permissions for Client Service container: SQS logging + Logs DynamoDB query. Client data stored in Aurora RDS."
   policy      = data.aws_iam_policy_document.ecs_task_policy_client.json
 }
 
@@ -1313,6 +1332,22 @@ data "aws_iam_policy_document" "lambda_policy_logging" {
     actions = ["dynamodb:PutItem"]
     resources = [
       "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_logs_name}",
+    ]
+  }
+
+  # Required for the Transactions DynamoDB stream → Logging Lambda event source
+  # mapping (Phase 10). Lambda needs these permissions to poll the stream shard.
+  statement {
+    sid    = "DynamoDBStreamsRead"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_transactions_name}/stream/*",
     ]
   }
 
@@ -1568,6 +1603,33 @@ data "aws_iam_policy_document" "lambda_policy_anomaly_detection" {
     actions = ["sqs:SendMessage"]
     resources = [
       "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_fraud_notification_name}",
+    ]
+  }
+
+  statement {
+    # Required for destination_config on_failure in the Accounts DynamoDB stream → Anomaly Detection
+    # Lambda event source mapping (Phase 10). The mapping routes permanently failed batches to the DLQ.
+    sid     = "SQSSendFraudDLQ"
+    effect  = "Allow"
+    actions = ["sqs:SendMessage"]
+    resources = [
+      "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_fraud_notification_name}-dlq",
+    ]
+  }
+
+  # Required for the Accounts DynamoDB stream → Anomaly Detection Lambda event
+  # source mapping (Phase 10). Lambda needs these permissions to poll the stream shard.
+  statement {
+    sid    = "DynamoDBStreamsRead"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_accounts_name}/stream/*",
     ]
   }
 

@@ -127,3 +127,45 @@ variable "sftp_schedule_expression" {
   type        = string
   default     = "rate(1 hour)"
 }
+
+# =============================================================================
+# Phase 9 — Documents S3 Bucket
+# =============================================================================
+
+variable "s3_documents_bucket_name" {
+  description = "Documents S3 bucket name — injected into Verification Lambda as S3_BUCKET_DOCUMENTS env var (was empty placeholder in Phase 8)"
+  type        = string
+}
+
+
+# =============================================================================
+# Phase 10 — DynamoDB Stream ARNs
+# =============================================================================
+
+variable "dynamodb_stream_transactions_arn" {
+  description = "DynamoDB Transactions table stream ARN — used by Transactions→Logging Lambda event source mapping"
+  type        = string
+}
+
+variable "dynamodb_stream_accounts_arn" {
+  description = "DynamoDB Accounts table stream ARN — used by Accounts→Anomaly Detection Lambda event source mapping"
+  type        = string
+}
+
+
+# =============================================================================
+# Phase 10 — Lambda Reserved Concurrency
+# =============================================================================
+
+variable "lambda_reserved_concurrency" {
+  description = "Reserved concurrent execution limits per Lambda function. Setting to 0 disables the function entirely — never set sftp_fetch to 0."
+  type        = map(number)
+  default = {
+    verification      = 10
+    logging           = 5
+    user              = 10
+    sftp_fetch        = 1
+    anomaly_detection = 10
+    notification      = 5
+  }
+}

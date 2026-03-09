@@ -1,9 +1,55 @@
-# Example Terraform Variables File
-# Copy this file to terraform.tfvars and update with your values
-# Note: terraform.tfvars is excluded from git in .gitignore for security
+# =============================================================================
+# Terraform Variables — Dev Environment Example
+#
+# Copy to terraform.tfvars and update values as needed.
+# terraform.tfvars is excluded from git via .gitignore for security.
+# =============================================================================
 
-aws_region     = "us-east-1"
-environment    = "dev"
-project_name   = "devsecops-test"
-vpc_cidr       = "10.0.0.0/16"
-enable_encryption = true
+# --- Core Identity (Phase 1) ---
+aws_region   = "ap-southeast-1"
+environment  = "dev"
+profile      = "dominic-admin"
+project_name = "itsa-testing-setup"
+
+# --- Networking (Phase 2) ---
+vpc_cidr                 = "10.0.0.0/16"
+availability_zones       = ["ap-southeast-1a", "ap-southeast-1b"]
+public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+private_app_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+private_db_subnet_cidrs  = ["10.0.20.0/24", "10.0.21.0/24"]
+app_port                 = 8080
+
+# --- Data Storage (Phase 5) ---
+rds_instance_class                = "db.t3.medium"
+rds_backup_retention_days         = 7
+rds_database_name                 = "crmdb"
+rds_deletion_protection           = false # Set true for prod
+rds_skip_final_snapshot           = true  # Set false for prod
+elasticache_node_type             = "cache.t3.micro"
+elasticache_snapshot_retention_days = 7
+
+# --- Authentication (Phase 6) ---
+# cognito_domain_prefix = null  # Defaults to ${project_name}-${environment}
+callback_urls    = ["http://localhost:3000/callback"]
+logout_urls      = ["http://localhost:3000/logout"]
+ses_sender_email = "your-email@example.com" # Must verify in SES after first apply
+
+# --- Compute (Phase 7) ---
+ecs_task_cpu             = 256   # 0.25 vCPU (dev); 1024+ for prod
+ecs_task_memory          = 512   # MiB; must be compatible with cpu
+container_image_account  = "public.ecr.aws/docker/library/httpd:2.4" # Replace with ECR image
+container_image_client   = "public.ecr.aws/docker/library/httpd:2.4" # Replace with ECR image
+health_check_path        = "/health"
+ecs_log_retention_days   = 30
+alb_deletion_protection  = false # Set true for prod
+
+# --- Event-Driven (Phase 8) ---
+lambda_log_retention_days  = 30
+sftp_schedule_expression   = "rate(1 hour)"
+
+# --- Frontend & CDN (Phase 9) ---
+domain_name          = ""              # Empty = CloudFront default cert; set "crm.example.com" for custom domain
+cloudfront_price_class = "PriceClass_All"
+
+# --- Monitoring (Phase 10) ---
+alarm_email = "" # Empty = no email subscription; set "ops@example.com" to enable

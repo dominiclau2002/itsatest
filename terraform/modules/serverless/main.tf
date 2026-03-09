@@ -244,14 +244,16 @@ resource "aws_lambda_function" "verification" {
   timeout     = 30
   memory_size = 256
 
+  # Reserved concurrency caps concurrent executions to prevent runaway Lambda costs
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["verification"]
+
   environment {
     variables = {
       ENVIRONMENT          = var.environment
       AWS_REGION           = var.aws_region
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
-      # S3_BUCKET_DOCUMENTS left empty — Documents S3 bucket created in Phase 9
-      S3_BUCKET_DOCUMENTS = ""
-      SES_SENDER_EMAIL    = var.ses_sender_email
+      S3_BUCKET_DOCUMENTS  = var.s3_documents_bucket_name
+      SES_SENDER_EMAIL     = var.ses_sender_email
     }
   }
 
@@ -279,6 +281,8 @@ resource "aws_lambda_function" "logging" {
   # 5 s — each batch write to DynamoDB is fast; tight timeout surfaces hangs quickly
   timeout     = 5
   memory_size = 128
+
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["logging"]
 
   environment {
     variables = {
@@ -311,6 +315,8 @@ resource "aws_lambda_function" "user" {
   # 10 s — Cognito AdminCreate/Update calls are sub-second; headroom for retries
   timeout     = 10
   memory_size = 128
+
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["user"]
 
   environment {
     variables = {
@@ -348,6 +354,9 @@ resource "aws_lambda_function" "sftp_fetch" {
   timeout     = 300
   memory_size = 512
 
+  # sftp_fetch = 1 minimum — this Lambda is schedule-triggered (one invocation at a time)
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["sftp_fetch"]
+
   environment {
     variables = {
       ENVIRONMENT          = var.environment
@@ -384,6 +393,8 @@ resource "aws_lambda_function" "anomaly_detection" {
   timeout     = 30
   memory_size = 256
 
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["anomaly_detection"]
+
   environment {
     variables = {
       ENVIRONMENT                      = var.environment
@@ -417,6 +428,8 @@ resource "aws_lambda_function" "notification" {
   # 10 s — two DynamoDB reads + one SES send; tight timeout surfaces hangs quickly
   timeout     = 10
   memory_size = 128
+
+  reserved_concurrent_executions = var.lambda_reserved_concurrency["notification"]
 
   environment {
     variables = {
@@ -552,4 +565,46 @@ resource "aws_lambda_permission" "anomaly_detection_eventbridge" {
   function_name = aws_lambda_function.anomaly_detection.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.transaction_review.arn
+}
+
+
+# =============================================================================
+# DynamoDB Stream Event Source Mappings — Phase 10
+#
+# Connects DynamoDB table streams directly to Lambda functions so Lambda
+# processes record change events in near-real-time as they arrive on the stream.
+# bisect_batch_on_function_error = true: when a batch fails, Lambda splits it
+# in half and retries each half independently — prevents a single poison-pill
+# record from blocking the entire shard indefinitely.
+# =============================================================================
+
+# Transactions stream → Logging Lambda
+# Purpose: capture all transaction write events as structured audit entries in
+# the DynamoDB Logs table, providing a complete immutable trail of data changes.
+resource "aws_lambda_event_source_mapping" "transactions_stream" {
+  event_source_arn               = var.dynamodb_stream_transactions_arn
+  function_name                  = aws_lambda_function.logging.arn
+  starting_position              = "LATEST"
+  batch_size                     = 10
+  bisect_batch_on_function_error = true
+}
+
+# Accounts stream → Anomaly Detection Lambda
+# Purpose: detect anomalous account-level changes (unusual balance mutations,
+# rapid state transitions) that are not captured by the EventBridge transaction
+# review flow. on_failure DLQ ensures no account change event is silently lost.
+resource "aws_lambda_event_source_mapping" "accounts_stream" {
+  event_source_arn               = var.dynamodb_stream_accounts_arn
+  function_name                  = aws_lambda_function.anomaly_detection.arn
+  starting_position              = "LATEST"
+  batch_size                     = 10
+  bisect_batch_on_function_error = true
+
+  # on_failure routes permanently failed batches to the Fraud Notification DLQ
+  # for manual review — requires sqs:SendMessage on the DLQ in the execution role
+  destination_config {
+    on_failure {
+      destination_arn = aws_sqs_queue.fraud_notification_dlq.arn
+    }
+  }
 }
