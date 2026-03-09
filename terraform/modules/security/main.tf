@@ -1335,6 +1335,22 @@ data "aws_iam_policy_document" "lambda_policy_logging" {
     ]
   }
 
+  # Required for the Transactions DynamoDB stream → Logging Lambda event source
+  # mapping (Phase 10). Lambda needs these permissions to poll the stream shard.
+  statement {
+    sid    = "DynamoDBStreamsRead"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_transactions_name}/stream/*",
+    ]
+  }
+
   statement {
     sid    = "KMSAccessDynamoDB"
     effect = "Allow"
@@ -1598,6 +1614,22 @@ data "aws_iam_policy_document" "lambda_policy_anomaly_detection" {
     actions = ["sqs:SendMessage"]
     resources = [
       "arn:aws:sqs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:${local.sqs_queue_fraud_notification_name}-dlq",
+    ]
+  }
+
+  # Required for the Accounts DynamoDB stream → Anomaly Detection Lambda event
+  # source mapping (Phase 10). Lambda needs these permissions to poll the stream shard.
+  statement {
+    sid    = "DynamoDBStreamsRead"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+      "dynamodb:DescribeStream",
+      "dynamodb:ListStreams",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_accounts_name}/stream/*",
     ]
   }
 

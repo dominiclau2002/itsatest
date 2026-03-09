@@ -299,7 +299,7 @@ resource "aws_cloudfront_distribution" "main" {
     cloudfront_default_certificate = var.domain_name == "" ? true : null
     acm_certificate_arn            = var.domain_name != "" && var.acm_cert_cloudfront_arn != "" ? var.acm_cert_cloudfront_arn : null
     ssl_support_method             = var.domain_name != "" ? "sni-only" : null
-    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : "TLSv1"
+    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
   restrictions {

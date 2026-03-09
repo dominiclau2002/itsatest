@@ -242,7 +242,9 @@ resource "aws_iam_role" "vpc_flow_logs" {
   }
 }
 
-# VPC Flow Logs → CloudWatch Logs IAM policy
+# VPC Flow Logs → CloudWatch Logs IAM policy.
+# Scoped to the specific flow log group ARN (with :* suffix for stream-level
+# operations) — same pattern as the CloudTrail CW Logs policy above.
 resource "aws_iam_role_policy" "vpc_flow_logs" {
   name = "${var.project_name}-${var.environment}-policy-vpc-flow-logs"
   role = aws_iam_role.vpc_flow_logs.id
@@ -258,7 +260,7 @@ resource "aws_iam_role_policy" "vpc_flow_logs" {
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams",
       ]
-      Resource = "*"
+      Resource = "${aws_cloudwatch_log_group.vpc_flow_logs.arn}:*"
     }]
   })
 }
@@ -487,11 +489,12 @@ resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
 # Alert on any DynamoDB system errors (internal AWS errors, not throttling).
 # SystemErrors >= 1 in 60s is always worth investigating — these indicate
 # an AWS-side issue that the application cannot handle via retry alone.
-# Note: A single alarm monitors the first table; for production a composite alarm
-# covering all 4 tables is preferred, but exceeds the scope of this implementation.
+# One alarm per DynamoDB table for full coverage across all 4 tables.
 resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
-  alarm_name          = "${var.project_name}-${var.environment}-ddb-system-errors"
-  alarm_description   = "DynamoDB SystemErrors detected on ${var.dynamodb_table_names[0]} — indicates AWS infrastructure issue"
+  for_each = toset(var.dynamodb_table_names)
+
+  alarm_name          = "${var.project_name}-${var.environment}-ddb-system-errors-${each.value}"
+  alarm_description   = "DynamoDB SystemErrors detected on ${each.value} — indicates AWS infrastructure issue"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "SystemErrors"
@@ -502,14 +505,14 @@ resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    TableName = var.dynamodb_table_names[0]
+    TableName = each.value
   }
 
   alarm_actions = [aws_sns_topic.alarms.arn]
   ok_actions    = [aws_sns_topic.alarms.arn]
 
   tags = {
-    Name      = "${var.project_name}-${var.environment}-ddb-system-errors"
+    Name      = "${var.project_name}-${var.environment}-ddb-system-errors-${each.value}"
     Component = "cloudwatch-alarm"
   }
 }
@@ -794,9 +797,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   }
 }
 
+# Regional ELB service account — resolves to the correct account ID for the
+# current AWS region automatically, avoiding hardcoded region-specific IDs.
+data "aws_elb_service_account" "main" {}
+
 # Bucket policy: Allow the regional ELB service account to deliver access logs.
-# Account 114774131450 is the ELB service account for ap-southeast-1 (AWS-managed).
-# This ID is region-specific and must not be changed for this region.
 resource "aws_s3_bucket_policy" "alb_logs" {
   count  = var.enable_alb_access_logs ? 1 : 0
   bucket = aws_s3_bucket.alb_logs[0].id
@@ -807,7 +812,7 @@ resource "aws_s3_bucket_policy" "alb_logs" {
       Sid    = "AllowELBServiceAccountPut"
       Effect = "Allow"
       Principal = {
-        AWS = "arn:aws:iam::114774131450:root" # ap-southeast-1 ELB service account
+        AWS = data.aws_elb_service_account.main.arn
       }
       Action   = "s3:PutObject"
       Resource = "${aws_s3_bucket.alb_logs[0].arn}/*"
