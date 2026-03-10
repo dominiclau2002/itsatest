@@ -11,26 +11,6 @@
 #   7. compute        — depends on vpc-networking + security + data-layer + auth + serverless (SQS URL)
 #   8. cdn            — depends on storage + compute (ACM certs live at root to break circular dep)
 #
-# Phase 9 ACM certs: placed at root (not inside cdn module) to break the circular
-# dependency: cdn needs cert ARN → compute needs cert ARN → cdn uses compute ALB DNS.
-# Root-level certs are inputs to both cdn and compute modules with no circular dep.
-# =============================================================================
-
-
-# =============================================================================
-# Phase 9: ACM Certificates (Root-Level — Break Circular Dependency)
-#
-# Two certificates per domain:
-#   cloudfront — us-east-1 (required for CloudFront; global service uses us-east-1 WAF/ACM)
-#   alb        — ap-southeast-1 (ALB HTTPS listener must use same-region cert)
-#
-# Validation records created in Route 53 via data.aws_route53_zone.main.
-# aws_acm_certificate_validation blocks Terraform until DNS validation completes,
-# preventing CloudFront/ALB from attaching a PENDING_VALIDATION certificate.
-#
-# Both certs use the same DNS CNAME records (same domain); allow_overwrite = true
-# prevents duplicate record errors when both certs issue the same validation record.
-# =============================================================================
 
 data "aws_route53_zone" "main" {
   count        = var.domain_name != "" ? 1 : 0

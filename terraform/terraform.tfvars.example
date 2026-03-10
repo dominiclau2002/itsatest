@@ -9,7 +9,8 @@
 aws_region   = "ap-southeast-1"
 environment  = "dev"
 profile      = "dominic-admin"
-project_name = "itsa-testing-setup"
+project_name      = "itsa-testing-setup"
+enable_encryption = true  # Must remain true in prod; disabling breaks KMS-backed encryption on all data stores
 
 # --- Networking (Phase 2) ---
 vpc_cidr                 = "10.0.0.0/16"
@@ -40,11 +41,11 @@ ecs_task_memory          = 512   # MiB; must be compatible with cpu
 container_image_account  = "public.ecr.aws/docker/library/httpd:2.4" # Replace with ECR image
 container_image_client   = "public.ecr.aws/docker/library/httpd:2.4" # Replace with ECR image
 health_check_path        = "/health"
-ecs_log_retention_days   = 30
+ecs_log_retention_days   = 30  # Dev: 30 days (cost savings). Prod: set 365 (CKV_AWS_338 compliance baseline)
 alb_deletion_protection  = false # Set true for prod
 
 # --- Event-Driven (Phase 8) ---
-lambda_log_retention_days  = 30
+lambda_log_retention_days  = 30  # Dev: 30 days (cost savings). Prod: set 365 (CKV_AWS_338 compliance baseline)
 sftp_schedule_expression   = "rate(1 hour)"
 
 # --- Frontend & CDN (Phase 9) ---
@@ -53,3 +54,4 @@ cloudfront_price_class = "PriceClass_All"
 
 # --- Monitoring (Phase 10) ---
 alarm_email = "" # Empty = no email subscription; set "ops@example.com" to enable
+

@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.10"
 
   required_providers {
     aws = {
@@ -22,16 +22,16 @@ terraform {
     }
   }
 
-  # Remote state backend — S3 bucket and DynamoDB lock table must be bootstrapped
-  # via AWS CLI before running `terraform init`. See CLAUDE.md Commands section
-  # for the bootstrap commands.
+  # Remote state backend — S3 bucket must be bootstrapped via AWS CLI before
+  # running `terraform init`. See CLAUDE.md Commands section for bootstrap commands.
+  # use_lockfile (Terraform 1.10+): native S3 conditional-write locking — no DynamoDB table needed.
   backend "s3" {
-    bucket         = "itsa-testing-setup-dev-terraform-state"
-    key            = "dev/terraform.tfstate"
-    region         = "ap-southeast-1"
-    dynamodb_table = "itsa-testing-setup-dev-terraform-lock"
-    encrypt        = true
-    profile        = "dominic-admin"
+    bucket       = "itsa-testing-setup-dev-terraform-state"
+    key          = "dev/terraform.tfstate"
+    region       = "ap-southeast-1"
+    use_lockfile = true
+    encrypt      = true
+    profile      = "dominic-admin"
   }
 }
 
