@@ -20,7 +20,7 @@ locals {
 
 
 # =============================================================================
-# Aurora PostgreSQL — RDS
+# Aurora PostgreSQL  -  RDS
 # =============================================================================
 
 # Master Password
@@ -48,7 +48,7 @@ resource "aws_secretsmanager_secret_version" "rds_master_password" {
 # DB Subnet Group
 resource "aws_db_subnet_group" "main" {
   name        = "${var.project_name}-${var.environment}-db-subnet-group"
-  description = "Subnet group for Aurora PostgreSQL cluster — private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
+  description = "Subnet group for Aurora PostgreSQL cluster  -  private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
   subnet_ids  = [var.private_db_subnet_1_id, var.private_db_subnet_2_id]
 
   tags = {
@@ -61,7 +61,7 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_rds_cluster_parameter_group" "main" {
   name        = "${var.project_name}-${var.environment}-aurora-pg15-params"
   family      = "aurora-postgresql15"
-  description = "Custom Aurora PostgreSQL 15 parameters — enforces TLS (rds.force_ssl=1)"
+  description = "Custom Aurora PostgreSQL 15 parameters  -  enforces TLS (rds.force_ssl=1)"
 
   parameter {
     name         = "rds.force_ssl"
@@ -77,6 +77,7 @@ resource "aws_rds_cluster_parameter_group" "main" {
 
 # Aurora Cluster
 resource "aws_rds_cluster" "primary" {
+  count              = var.create_rds_cluster ? 1 : 0
   cluster_identifier = "${var.project_name}-${var.environment}-aurora"
   engine             = "aurora-postgresql"
   engine_version     = "15.4"
@@ -140,11 +141,12 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 
 # Aurora Writer Instance (ap-southeast-1a)
 resource "aws_rds_cluster_instance" "writer" {
+  count              = var.create_rds_cluster ? 1 : 0
   identifier         = "${var.project_name}-${var.environment}-aurora-writer"
-  cluster_identifier = aws_rds_cluster.primary.id
+  cluster_identifier = aws_rds_cluster.primary[0].id
   instance_class     = var.rds_instance_class
-  engine             = aws_rds_cluster.primary.engine
-  engine_version     = aws_rds_cluster.primary.engine_version
+  engine             = aws_rds_cluster.primary[0].engine
+  engine_version     = aws_rds_cluster.primary[0].engine_version
 
   availability_zone = var.availability_zones[0]
   promotion_tier    = 0
@@ -165,11 +167,12 @@ resource "aws_rds_cluster_instance" "writer" {
 
 # Aurora Reader Instance (ap-southeast-1b)
 resource "aws_rds_cluster_instance" "reader" {
+  count              = var.create_rds_cluster ? 1 : 0
   identifier         = "${var.project_name}-${var.environment}-aurora-reader"
-  cluster_identifier = aws_rds_cluster.primary.id
+  cluster_identifier = aws_rds_cluster.primary[0].id
   instance_class     = var.rds_instance_class
-  engine             = aws_rds_cluster.primary.engine
-  engine_version     = aws_rds_cluster.primary.engine_version
+  engine             = aws_rds_cluster.primary[0].engine
+  engine_version     = aws_rds_cluster.primary[0].engine_version
 
   availability_zone = var.availability_zones[1]
   promotion_tier    = 1
@@ -380,7 +383,7 @@ resource "aws_dynamodb_table" "transactions" {
 # Shared subnet group
 resource "aws_elasticache_subnet_group" "main" {
   name        = "${var.project_name}-${var.environment}-elasticache-subnet-group"
-  description = "Subnet group for ElastiCache Redis clusters — private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
+  description = "Subnet group for ElastiCache Redis clusters  -  private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
   subnet_ids  = [var.private_db_subnet_1_id, var.private_db_subnet_2_id]
 
   tags = {
@@ -433,11 +436,11 @@ resource "aws_secretsmanager_secret_version" "redis_client_auth" {
 }
 
 # Account Redis Replication Group
-# Single-node (primary only, AZ-1a). No automatic failover — ECS services must
+# Single-node (primary only, AZ-1a). No automatic failover  -  ECS services must
 # handle cache unavailability gracefully by falling back to DynamoDB directly.
 resource "aws_elasticache_replication_group" "account" {
   replication_group_id = "${var.project_name}-${var.environment}-redis-account"
-  description          = "Redis cache for Account Service — single-node primary in AZ-1a (no replica)"
+  description          = "Redis cache for Account Service  -  single-node primary in AZ-1a (no replica)"
 
   engine         = "redis"
   engine_version = "7.0"
@@ -470,11 +473,11 @@ resource "aws_elasticache_replication_group" "account" {
 }
 
 # Client Redis Replication Group
-# Single-node (primary only, AZ-1a). No automatic failover — ECS services must
+# Single-node (primary only, AZ-1a). No automatic failover  -  ECS services must
 # handle cache unavailability gracefully by falling back to RDS directly.
 resource "aws_elasticache_replication_group" "client" {
   replication_group_id = "${var.project_name}-${var.environment}-redis-client"
-  description          = "Redis cache for Client Service — single-node primary in AZ-1a (no replica)"
+  description          = "Redis cache for Client Service  -  single-node primary in AZ-1a (no replica)"
 
   engine         = "redis"
   engine_version = "7.0"

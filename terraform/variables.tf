@@ -87,13 +87,13 @@ variable "rds_instance_class" {
 }
 
 variable "rds_backup_retention_days" {
-  description = "Number of days to retain RDS automated backups (minimum 7 for dev, 30 for prod)"
+  description = "Number of days to retain RDS automated backups. 0 disables automated backups (free tier). Minimum 7 for dev, 30 for prod."
   type        = number
   default     = 7
 
   validation {
-    condition     = var.rds_backup_retention_days >= 7
-    error_message = "rds_backup_retention_days must be at least 7."
+    condition     = var.rds_backup_retention_days >= 0 && var.rds_backup_retention_days <= 35
+    error_message = "rds_backup_retention_days must be between 0 (disabled) and 35."
   }
 }
 
@@ -101,6 +101,12 @@ variable "rds_database_name" {
   description = "Name of the initial PostgreSQL database created on the Aurora cluster"
   type        = string
   default     = "crmdb"
+}
+
+variable "create_rds_cluster" {
+  description = "Set to false to skip Aurora cluster creation on free-tier AWS accounts (Aurora requires WithExpressConfiguration on free tier). Set true once account is upgraded."
+  type        = bool
+  default     = true
 }
 
 variable "rds_deletion_protection" {
@@ -224,7 +230,7 @@ variable "sftp_schedule_expression" {
 # =============================================================================
 
 variable "domain_name" {
-  description = "Custom domain name for CloudFront and ALB (e.g. crm.example.com). Empty string (default) skips HTTPS listeners, ACM certs, and Route 53 records — CDN uses CloudFront default certificate."
+  description = "Custom domain name for CloudFront and ALB (e.g. crm.example.com). Empty string (default) skips HTTPS listeners, ACM certs, and Route 53 records  -  CDN uses CloudFront default certificate."
   type        = string
   default     = ""
 }
@@ -246,7 +252,7 @@ variable "cloudfront_price_class" {
 # =============================================================================
 
 variable "alarm_email" {
-  description = "Email address for CloudWatch alarm SNS notifications. Empty string (default) disables email subscription — alarms still fire to SNS topic."
+  description = "Email address for CloudWatch alarm SNS notifications. Empty string (default) disables email subscription  -  alarms still fire to SNS topic."
   type        = string
   default     = ""
 }

@@ -10,7 +10,7 @@ terraform {
       configuration_aliases = [aws.us_east_1]
     }
     # random: generates the RDS master password and Redis AUTH tokens.
-    # These are created once and stored in Secrets Manager — not regenerated on each apply.
+    # These are created once and stored in Secrets Manager  -  not regenerated on each apply.
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
@@ -22,9 +22,9 @@ terraform {
     }
   }
 
-  # Remote state backend — S3 bucket must be bootstrapped via AWS CLI before
+  # Remote state backend  -  S3 bucket must be bootstrapped via AWS CLI before
   # running `terraform init`. See CLAUDE.md Commands section for bootstrap commands.
-  # use_lockfile (Terraform 1.10+): native S3 conditional-write locking — no DynamoDB table needed.
+  # use_lockfile (Terraform 1.10+): native S3 conditional-write locking  -  no DynamoDB table needed.
   backend "s3" {
     bucket       = "itsa-testing-setup-dev-terraform-state"
     key          = "dev/terraform.tfstate"
@@ -35,7 +35,7 @@ terraform {
   }
 }
 
-# Default provider — ap-southeast-1 for all resources except WAF (us-east-1)
+# Default provider  -  ap-southeast-1 for all resources except WAF (us-east-1)
 provider "aws" {
   region  = var.aws_region
   profile = var.profile
@@ -52,7 +52,7 @@ provider "aws" {
   }
 }
 
-# us-east-1 provider — required for CloudFront WAF Web ACL (scope = CLOUDFRONT).
+# us-east-1 provider  -  required for CloudFront WAF Web ACL (scope = CLOUDFRONT).
 # WAF ACLs with scope=CLOUDFRONT must be created in us-east-1 regardless of
 # the distribution's global nature. Using any other region is a hard API error.
 provider "aws" {

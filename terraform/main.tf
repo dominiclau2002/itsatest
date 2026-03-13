@@ -1,15 +1,15 @@
 # =============================================================================
-# Root Module — Orchestrates all child modules
+# Root Module  -  Orchestrates all child modules
 #
 # Dependency order (inferred automatically from module.* references):
-#   1. vpc-networking — no dependencies
-#   2. auth           — no dependencies (Cognito + SES are public APIs)
-#   3. security       — depends on vpc-networking (vpc_id, endpoint IDs) + auth (cognito_user_pool_arn, ses_identity_arn)
-#   4. data-layer     — depends on vpc-networking + security (subnet IDs + SG IDs + KMS ARNs)
-#   5. storage        — depends on security (kms_s3_arn)
-#   6. serverless     — depends on security + data-layer + storage + auth
-#   7. compute        — depends on vpc-networking + security + data-layer + auth + serverless (SQS URL)
-#   8. cdn            — depends on storage + compute (ACM certs live at root to break circular dep)
+#   1. vpc-networking  -  no dependencies
+#   2. auth            -  no dependencies (Cognito + SES are public APIs)
+#   3. security        -  depends on vpc-networking (vpc_id, endpoint IDs) + auth (cognito_user_pool_arn, ses_identity_arn)
+#   4. data-layer      -  depends on vpc-networking + security (subnet IDs + SG IDs + KMS ARNs)
+#   5. storage         -  depends on security (kms_s3_arn)
+#   6. serverless      -  depends on security + data-layer + storage + auth
+#   7. compute         -  depends on vpc-networking + security + data-layer + auth + serverless (SQS URL)
+#   8. cdn             -  depends on storage + compute (ACM certs live at root to break circular dep)
 #
 
 data "aws_route53_zone" "main" {
@@ -18,7 +18,7 @@ data "aws_route53_zone" "main" {
   private_zone = false
 }
 
-# CloudFront ACM certificate — must be in us-east-1 (CloudFront requirement)
+# CloudFront ACM certificate  -  must be in us-east-1 (CloudFront requirement)
 resource "aws_acm_certificate" "cloudfront" {
   count                     = var.domain_name != "" ? 1 : 0
   provider                  = aws.us_east_1
@@ -36,7 +36,7 @@ resource "aws_acm_certificate" "cloudfront" {
   }
 }
 
-# ALB ACM certificate — ap-southeast-1 (same region as ALB)
+# ALB ACM certificate  -  ap-southeast-1 (same region as ALB)
 resource "aws_acm_certificate" "alb" {
   count                     = var.domain_name != "" ? 1 : 0
   domain_name               = var.domain_name
@@ -53,7 +53,7 @@ resource "aws_acm_certificate" "alb" {
   }
 }
 
-# Route 53 DNS validation records — shared by both certs (same domain = same CNAME record)
+# Route 53 DNS validation records  -  shared by both certs (same domain = same CNAME record)
 locals {
   domain_validation_options = var.domain_name != "" ? {
     for dvo in aws_acm_certificate.cloudfront[0].domain_validation_options : dvo.domain_name => {
@@ -145,6 +145,7 @@ module "data-layer" {
   kms_dynamodb_arn                    = module.security.kms_dynamodb_arn
   kms_elasticache_arn                 = module.security.kms_elasticache_arn
   kms_secrets_manager_arn             = module.security.kms_secrets_manager_arn
+  create_rds_cluster                  = var.create_rds_cluster
   rds_instance_class                  = var.rds_instance_class
   rds_backup_retention_days           = var.rds_backup_retention_days
   rds_database_name                   = var.rds_database_name
@@ -170,7 +171,7 @@ module "serverless" {
   project_name = var.project_name
   environment  = var.environment
 
-  # IAM roles (from security module — all 6 Lambda execution roles)
+  # IAM roles (from security module  -  all 6 Lambda execution roles)
   iam_role_lambda_verification_arn      = module.security.iam_role_lambda_verification_arn
   iam_role_lambda_logging_arn           = module.security.iam_role_lambda_logging_arn
   iam_role_lambda_user_arn              = module.security.iam_role_lambda_user_arn
@@ -178,28 +179,28 @@ module "serverless" {
   iam_role_lambda_anomaly_detection_arn = module.security.iam_role_lambda_anomaly_detection_arn
   iam_role_lambda_notification_arn      = module.security.iam_role_lambda_notification_arn
 
-  # Data layer — DynamoDB table names
+  # Data layer  -  DynamoDB table names
   dynamodb_table_accounts_name     = module.data-layer.dynamodb_table_accounts_name
   dynamodb_table_logs_name         = module.data-layer.dynamodb_table_logs_name
   dynamodb_table_users_name        = module.data-layer.dynamodb_table_users_name
   dynamodb_table_transactions_name = module.data-layer.dynamodb_table_transactions_name
 
-  # Storage — S3 SFTP bucket + Phase 9 Documents bucket
+  # Storage  -  S3 SFTP bucket + Phase 9 Documents bucket
   s3_sftp_bucket_name      = module.storage.s3_sftp_bucket_name
   s3_documents_bucket_name = module.storage.s3_documents_bucket_name
 
-  # Auth — Cognito + SES
+  # Auth  -  Cognito + SES
   cognito_user_pool_id = module.auth.cognito_user_pool_id
   ses_sender_email     = var.ses_sender_email
 
   # KMS key for Lambda log group encryption (from security module)
   kms_cloudwatch_arn = module.security.kms_cloudwatch_arn
 
-  # Config (with defaults — override in tfvars)
+  # Config (with defaults  -  override in tfvars)
   lambda_log_retention_days = var.lambda_log_retention_days
   sftp_schedule_expression  = var.sftp_schedule_expression
 
-  # Phase 10 — DynamoDB Stream ARNs for event source mappings
+  # Phase 10  -  DynamoDB Stream ARNs for event source mappings
   dynamodb_stream_transactions_arn = module.data-layer.dynamodb_table_transactions_stream_arn
   dynamodb_stream_accounts_arn     = module.data-layer.dynamodb_table_accounts_stream_arn
 }
@@ -213,7 +214,7 @@ module "compute" {
   environment  = var.environment
   app_port     = var.app_port
 
-  # VPC — subnets for ALB (public) and ECS tasks (private-app)
+  # VPC  -  subnets for ALB (public) and ECS tasks (private-app)
   vpc_id                  = module.vpc-networking.vpc_id
   public_subnet_1_id      = module.vpc-networking.public_subnet_1_id
   public_subnet_2_id      = module.vpc-networking.public_subnet_2_id
@@ -224,44 +225,44 @@ module "compute" {
   kms_s3_arn         = module.security.kms_s3_arn         # ECR image layer encryption
   kms_cloudwatch_arn = module.security.kms_cloudwatch_arn # ECS log group encryption
 
-  # Security groups — ALB + 4 ECS task SGs (one per service per AZ)
+  # Security groups  -  ALB + 4 ECS task SGs (one per service per AZ)
   sg_alb_id                   = module.security.sg_alb_id
   sg_ecs_account_primary_id   = module.security.sg_ecs_account_primary_id
   sg_ecs_account_secondary_id = module.security.sg_ecs_account_secondary_id
   sg_ecs_client_primary_id    = module.security.sg_ecs_client_primary_id
   sg_ecs_client_secondary_id  = module.security.sg_ecs_client_secondary_id
 
-  # IAM roles — execution (ECR pull + Secrets Manager) and task (runtime permissions)
+  # IAM roles  -  execution (ECR pull + Secrets Manager) and task (runtime permissions)
   iam_role_ecs_account_execution_arn = module.security.iam_role_ecs_account_execution_arn
   iam_role_ecs_account_task_arn      = module.security.iam_role_ecs_account_task_arn
   iam_role_ecs_client_execution_arn  = module.security.iam_role_ecs_client_execution_arn
   iam_role_ecs_client_task_arn       = module.security.iam_role_ecs_client_task_arn
 
-  # Data layer — RDS endpoints for Client Service
+  # Data layer  -  RDS endpoints for Client Service
   rds_cluster_endpoint = module.data-layer.rds_cluster_endpoint
   rds_cluster_port     = module.data-layer.rds_cluster_port
   rds_database_name    = module.data-layer.rds_cluster_database_name
   rds_master_username  = module.data-layer.rds_cluster_master_username
 
-  # Data layer — DynamoDB table names for Account Service
+  # Data layer  -  DynamoDB table names for Account Service
   dynamodb_table_accounts_name     = module.data-layer.dynamodb_table_accounts_name
   dynamodb_table_transactions_name = module.data-layer.dynamodb_table_transactions_name
 
-  # Data layer — ElastiCache endpoints
+  # Data layer  -  ElastiCache endpoints
   elasticache_account_endpoint = module.data-layer.elasticache_account_primary_endpoint_address
   elasticache_account_port     = module.data-layer.elasticache_account_port
   elasticache_client_endpoint  = module.data-layer.elasticache_client_primary_endpoint_address
   elasticache_client_port      = module.data-layer.elasticache_client_port
 
-  # Secrets Manager ARNs — injected into ECS task definitions as secrets
+  # Secrets Manager ARNs  -  injected into ECS task definitions as secrets
   secret_rds_master_password_arn = module.data-layer.secret_rds_master_password_arn
   secret_redis_account_auth_arn  = module.data-layer.secret_redis_account_auth_arn
   secret_redis_client_auth_arn   = module.data-layer.secret_redis_client_auth_arn
 
-  # Auth — Cognito user pool ID for JWKS validation
+  # Auth  -  Cognito user pool ID for JWKS validation
   cognito_user_pool_id = module.auth.cognito_user_pool_id
 
-  # Config (with defaults — override in tfvars for prod)
+  # Config (with defaults  -  override in tfvars for prod)
   ecs_task_cpu            = var.ecs_task_cpu
   ecs_task_memory         = var.ecs_task_memory
   container_image_account = var.container_image_account
@@ -270,16 +271,16 @@ module "compute" {
   ecs_log_retention_days  = var.ecs_log_retention_days
   alb_deletion_protection = var.alb_deletion_protection
 
-  # Phase 8 — SQS Logging queue URL from serverless module
+  # Phase 8  -  SQS Logging queue URL from serverless module
   sqs_queue_logging_url = module.serverless.sqs_queue_logging_url
 
-  # Phase 9 — HTTPS listener + Lambda routing
+  # Phase 9  -  HTTPS listener + Lambda routing
   domain_name             = var.domain_name
   acm_cert_alb_arn        = var.domain_name != "" ? aws_acm_certificate_validation.alb[0].certificate_arn : ""
   lambda_verification_arn = module.serverless.lambda_verification_arn
   lambda_user_arn         = module.serverless.lambda_user_arn
 
-  # ALB access logs bucket (from storage module — avoids circular dep with monitoring)
+  # ALB access logs bucket (from storage module  -  avoids circular dep with monitoring)
   alb_logs_bucket_name = module.storage.alb_logs_bucket_name
 }
 
@@ -313,7 +314,7 @@ module "monitoring" {
   project_name = var.project_name
   environment  = var.environment
 
-  # VPC — for VPC Flow Logs
+  # VPC  -  for VPC Flow Logs
   vpc_id = module.vpc-networking.vpc_id
 
   # ECS alarm dimensions (from compute module)
@@ -321,7 +322,7 @@ module "monitoring" {
   ecs_account_service_name = module.compute.ecs_account_primary_service_name
   ecs_client_service_name  = module.compute.ecs_client_primary_service_name
 
-  # ALB alarm dimension — must use arn_suffix, not full ARN
+  # ALB alarm dimension  -  must use arn_suffix, not full ARN
   alb_arn_suffix = module.compute.alb_arn_suffix
 
   # RDS alarm dimension (from data-layer module)
@@ -352,6 +353,6 @@ module "monitoring" {
   kms_cloudwatch_arn = module.security.kms_cloudwatch_arn
   kms_s3_arn         = module.security.kms_s3_arn
 
-  # Optional — alarm email subscription
+  # Optional  -  alarm email subscription
   alarm_email = var.alarm_email
 }

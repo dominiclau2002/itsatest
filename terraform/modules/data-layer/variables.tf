@@ -58,6 +58,12 @@ variable "kms_secrets_manager_arn" {
   type        = string
 }
 
+variable "create_rds_cluster" {
+  description = "Set to false to skip Aurora cluster creation (required on free-tier AWS accounts which do not support Aurora without WithExpressConfiguration). Set true once the account is upgraded."
+  type        = bool
+  default     = true
+}
+
 variable "rds_instance_class" {
   description = "RDS Aurora instance class for writer and reader nodes"
   type        = string

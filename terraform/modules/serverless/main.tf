@@ -21,7 +21,7 @@
 # Module-Level Locals
 #
 # Recomputed from project_name + environment (same formulas as root locals.tf).
-# Modules do not inherit root locals — must be defined locally.
+# Modules do not inherit root locals  -  must be defined locally.
 # =============================================================================
 
 locals {
@@ -67,15 +67,15 @@ data "archive_file" "lambda_placeholder" {
 # SQS Queues
 #
 # Two logical queues:
-#   1. Logging — best-effort audit trail written by ECS services; no DLQ
+#   1. Logging  -  best-effort audit trail written by ECS services; no DLQ
 #      because missed log entries are non-critical and do not need reprocessing.
-#   2. Fraud Notification — critical path; DLQ captures messages that fail
+#   2. Fraud Notification  -  critical path; DLQ captures messages that fail
 #      3 processing attempts so no fraud alert is silently dropped.
-# Both use SSE-SQS (AWS-managed) — messages are transient operational data,
+# Both use SSE-SQS (AWS-managed)  -  messages are transient operational data,
 # not long-lived PII, so AWS-managed encryption is sufficient here.
 # =============================================================================
 
-# Logging queue — receives audit log events from ECS Account and Client services
+# Logging queue  -  receives audit log events from ECS Account and Client services
 resource "aws_sqs_queue" "logging" {
   name = local.sqs_queue_logging_name
 
@@ -86,10 +86,10 @@ resource "aws_sqs_queue" "logging" {
   # (AWS recommendation: visibility timeout >= 6× function timeout)
   visibility_timeout_seconds = 30
 
-  # SSE-SQS (AWS-managed) — adequate for transient log payloads
+  # SSE-SQS (AWS-managed)  -  adequate for transient log payloads
   sqs_managed_sse_enabled = true
 
-  # No DLQ — log entries are best-effort; a failed write is acceptable
+  # No DLQ  -  log entries are best-effort; a failed write is acceptable
   # rather than adding operational overhead for non-critical audit data
 
   tags = {
@@ -98,7 +98,7 @@ resource "aws_sqs_queue" "logging" {
   }
 }
 
-# Dead-letter queue for the Fraud Notification queue — captures messages that
+# Dead-letter queue for the Fraud Notification queue  -  captures messages that
 # fail 3 processing attempts so no fraud alert is silently discarded
 resource "aws_sqs_queue" "fraud_notification_dlq" {
   name = "${local.sqs_queue_fraud_notification_name}-dlq"
@@ -114,12 +114,12 @@ resource "aws_sqs_queue" "fraud_notification_dlq" {
   }
 }
 
-# Fraud Notification queue — receives fraud events from Anomaly Detection Lambda;
+# Fraud Notification queue  -  receives fraud events from Anomaly Detection Lambda;
 # triggers the Notification Lambda to alert the assigned agent via SES email
 resource "aws_sqs_queue" "fraud_notification" {
   name = local.sqs_queue_fraud_notification_name
 
-  # 14-day retention — fraud alerts are critical; retain long enough for manual review
+  # 14-day retention  -  fraud alerts are critical; retain long enough for manual review
   message_retention_seconds = 1209600
 
   # 60 s visibility timeout = 6× the Notification Lambda's 10 s execution timeout
@@ -141,10 +141,10 @@ resource "aws_sqs_queue" "fraud_notification" {
 
 
 # =============================================================================
-# CloudWatch Log Groups — Lambda
+# CloudWatch Log Groups  -  Lambda
 #
 # Pre-created so Lambda does not auto-create them without retention policies.
-# Names follow the /aws/lambda/<function-name> convention — Lambda will
+# Names follow the /aws/lambda/<function-name> convention  -  Lambda will
 # automatically write to the matching group without additional configuration.
 # =============================================================================
 
@@ -172,7 +172,7 @@ resource "aws_cloudwatch_log_group" "lambda_logging" {
   }
 }
 
-# Log group for User Lambda (Cognito user management — create, update, disable)
+# Log group for User Lambda (Cognito user management  -  create, update, disable)
 resource "aws_cloudwatch_log_group" "lambda_user" {
   name              = local.log_group_lambda_user
   retention_in_days = var.lambda_log_retention_days
@@ -227,14 +227,14 @@ resource "aws_cloudwatch_log_group" "lambda_notification" {
 # All 6 functions share the same placeholder deployment package (index.py).
 # publish = true creates a numbered version on each deploy, enabling future
 # traffic-shifting aliases (canary deployments).
-# No vpc_config — Lambdas reach AWS APIs via public endpoints; placing them
+# No vpc_config  -  Lambdas reach AWS APIs via public endpoints; placing them
 # inside the VPC would require NAT Gateway egress and add cold-start latency
 # with no security benefit for these workloads.
 # depends_on the matching log group ensures the group exists before Lambda
 # attempts to write its first log stream, preventing a race condition.
 # =============================================================================
 
-# Verification Lambda — handles account signup confirmation and email verification;
+# Verification Lambda  -  handles account signup confirmation and email verification;
 # sends transactional emails via SES; will write documents to S3 in Phase 9
 resource "aws_lambda_function" "verification" {
   function_name = local.lambda_verification_name
@@ -246,7 +246,7 @@ resource "aws_lambda_function" "verification" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 30 s — verification flows involve Cognito + SES round-trips; generous timeout
+  # 30 s  -  verification flows involve Cognito + SES round-trips; generous timeout
   timeout     = 30
   memory_size = 256
 
@@ -256,7 +256,6 @@ resource "aws_lambda_function" "verification" {
   environment {
     variables = {
       ENVIRONMENT          = var.environment
-      AWS_REGION           = var.aws_region
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
       S3_BUCKET_DOCUMENTS  = var.s3_documents_bucket_name
       SES_SENDER_EMAIL     = var.ses_sender_email
@@ -272,7 +271,7 @@ resource "aws_lambda_function" "verification" {
   }
 }
 
-# Logging Lambda — drains the Logging SQS queue and persists audit records to
+# Logging Lambda  -  drains the Logging SQS queue and persists audit records to
 # DynamoDB Logs table; triggered via SQS event source mapping below
 resource "aws_lambda_function" "logging" {
   function_name = local.lambda_logging_name
@@ -284,7 +283,7 @@ resource "aws_lambda_function" "logging" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 5 s — each batch write to DynamoDB is fast; tight timeout surfaces hangs quickly
+  # 5 s  -  each batch write to DynamoDB is fast; tight timeout surfaces hangs quickly
   timeout     = 5
   memory_size = 128
 
@@ -293,7 +292,6 @@ resource "aws_lambda_function" "logging" {
   environment {
     variables = {
       ENVIRONMENT         = var.environment
-      AWS_REGION          = var.aws_region
       DYNAMODB_TABLE_LOGS = var.dynamodb_table_logs_name
     }
   }
@@ -306,7 +304,7 @@ resource "aws_lambda_function" "logging" {
   }
 }
 
-# User Lambda — Cognito user management operations (create agent, update attributes,
+# User Lambda  -  Cognito user management operations (create agent, update attributes,
 # disable/enable accounts); invoked synchronously by the Account Service via IAM
 resource "aws_lambda_function" "user" {
   function_name = local.lambda_user_name
@@ -318,7 +316,7 @@ resource "aws_lambda_function" "user" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 10 s — Cognito AdminCreate/Update calls are sub-second; headroom for retries
+  # 10 s  -  Cognito AdminCreate/Update calls are sub-second; headroom for retries
   timeout     = 10
   memory_size = 128
 
@@ -327,7 +325,6 @@ resource "aws_lambda_function" "user" {
   environment {
     variables = {
       ENVIRONMENT          = var.environment
-      AWS_REGION           = var.aws_region
       COGNITO_USER_POOL_ID = var.cognito_user_pool_id
       DYNAMODB_TABLE_USERS = var.dynamodb_table_users_name
     }
@@ -341,11 +338,11 @@ resource "aws_lambda_function" "user" {
   }
 }
 
-# SFTP Fetch Lambda — runs on the EventBridge schedule; reads new transaction files
+# SFTP Fetch Lambda  -  runs on the EventBridge schedule; reads new transaction files
 # from the SFTP S3 bucket (transactions/ prefix), parses them, emits
 # transaction-for-review events to EventBridge for downstream anomaly scoring.
-# 512 MB — parsing large CSV/XLSX transaction files is memory-intensive.
-# 300 s timeout (5 min) — handles large batch files with multiple records.
+# 512 MB  -  parsing large CSV/XLSX transaction files is memory-intensive.
+# 300 s timeout (5 min)  -  handles large batch files with multiple records.
 resource "aws_lambda_function" "sftp_fetch" {
   function_name = local.lambda_sftp_fetch_name
   role          = var.iam_role_lambda_sftp_fetch_arn
@@ -356,17 +353,16 @@ resource "aws_lambda_function" "sftp_fetch" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 300 s — large SFTP batch files may contain thousands of transaction records
+  # 300 s  -  large SFTP batch files may contain thousands of transaction records
   timeout     = 300
   memory_size = 512
 
-  # sftp_fetch = 1 minimum — this Lambda is schedule-triggered (one invocation at a time)
+  # sftp_fetch = 1 minimum  -  this Lambda is schedule-triggered (one invocation at a time)
   reserved_concurrent_executions = var.lambda_reserved_concurrency["sftp_fetch"]
 
   environment {
     variables = {
       ENVIRONMENT          = var.environment
-      AWS_REGION           = var.aws_region
       S3_BUCKET_SFTP       = var.s3_sftp_bucket_name
       EVENTBRIDGE_BUS_NAME = "default"
       # Secrets Manager prefix for any SFTP-related credentials (e.g. PGP keys)
@@ -382,7 +378,7 @@ resource "aws_lambda_function" "sftp_fetch" {
   }
 }
 
-# Anomaly Detection Lambda — receives transaction-for-review events from EventBridge,
+# Anomaly Detection Lambda  -  receives transaction-for-review events from EventBridge,
 # scores each transaction against DynamoDB Transactions history, and publishes
 # fraud events to the Fraud Notification SQS queue when a threshold is exceeded
 resource "aws_lambda_function" "anomaly_detection" {
@@ -395,7 +391,7 @@ resource "aws_lambda_function" "anomaly_detection" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 30 s — scoring logic may involve multiple DynamoDB reads and SQS writes
+  # 30 s  -  scoring logic may involve multiple DynamoDB reads and SQS writes
   timeout     = 30
   memory_size = 256
 
@@ -404,7 +400,6 @@ resource "aws_lambda_function" "anomaly_detection" {
   environment {
     variables = {
       ENVIRONMENT                      = var.environment
-      AWS_REGION                       = var.aws_region
       DYNAMODB_TABLE_TRANSACTIONS      = var.dynamodb_table_transactions_name
       SQS_QUEUE_FRAUD_NOTIFICATION_URL = aws_sqs_queue.fraud_notification.url
     }
@@ -418,7 +413,7 @@ resource "aws_lambda_function" "anomaly_detection" {
   }
 }
 
-# Notification Lambda — triggered by Fraud Notification SQS queue; looks up the
+# Notification Lambda  -  triggered by Fraud Notification SQS queue; looks up the
 # assigned agent via Accounts DynamoDB (ClientIndex GSI) then Users DynamoDB
 # (GetItem by agent_id), and dispatches a fraud alert email via SES
 resource "aws_lambda_function" "notification" {
@@ -431,7 +426,7 @@ resource "aws_lambda_function" "notification" {
   source_code_hash = data.archive_file.lambda_placeholder.output_base64sha256
   publish          = true
 
-  # 10 s — two DynamoDB reads + one SES send; tight timeout surfaces hangs quickly
+  # 10 s  -  two DynamoDB reads + one SES send; tight timeout surfaces hangs quickly
   timeout     = 10
   memory_size = 128
 
@@ -440,7 +435,6 @@ resource "aws_lambda_function" "notification" {
   environment {
     variables = {
       ENVIRONMENT             = var.environment
-      AWS_REGION              = var.aws_region
       DYNAMODB_TABLE_ACCOUNTS = var.dynamodb_table_accounts_name
       DYNAMODB_TABLE_USERS    = var.dynamodb_table_users_name
       SES_SENDER_EMAIL        = var.ses_sender_email
@@ -457,15 +451,15 @@ resource "aws_lambda_function" "notification" {
 
 
 # =============================================================================
-# Lambda Event Source Mappings — SQS Triggers
+# Lambda Event Source Mappings  -  SQS Triggers
 #
 # Connects SQS queues to Lambda functions so Lambda polls the queue and
-# processes messages in batches. Managed by the Lambda service — no additional
+# processes messages in batches. Managed by the Lambda service  -  no additional
 # IAM permissions needed beyond what is already on the execution role.
 # =============================================================================
 
 # Triggers Logging Lambda when messages arrive on the Logging queue.
-# batch_size = 10 — process up to 10 audit events per invocation to keep
+# batch_size = 10  -  process up to 10 audit events per invocation to keep
 # DynamoDB write costs predictable and invocation duration under 5 s.
 resource "aws_lambda_event_source_mapping" "logging_sqs" {
   event_source_arn = aws_sqs_queue.logging.arn
@@ -475,7 +469,7 @@ resource "aws_lambda_event_source_mapping" "logging_sqs" {
 }
 
 # Triggers Notification Lambda when fraud events arrive on the Fraud Notification queue.
-# batch_size = 1 — each fraud alert is processed independently to prevent one
+# batch_size = 1  -  each fraud alert is processed independently to prevent one
 # failed SES send from blocking other alerts in the same batch.
 resource "aws_lambda_event_source_mapping" "fraud_notification_sqs" {
   event_source_arn = aws_sqs_queue.fraud_notification.arn
@@ -489,15 +483,15 @@ resource "aws_lambda_event_source_mapping" "fraud_notification_sqs" {
 # EventBridge Rules
 #
 # Two rules on the default event bus:
-#   1. sftp_schedule — time-based; fires on the configured rate/cron expression
+#   1. sftp_schedule  -  time-based; fires on the configured rate/cron expression
 #      to trigger the SFTP Fetch Lambda.
-#   2. transaction_review — content-based; matches events emitted by SFTP Fetch
+#   2. transaction_review  -  content-based; matches events emitted by SFTP Fetch
 #      Lambda (source=crm.sftp-fetch, detail-type=transaction-for-review) and
 #      routes them to the Anomaly Detection Lambda.
 # =============================================================================
 
 # Scheduled rule that invokes SFTP Fetch Lambda on a recurring cadence.
-# Default: rate(1 hour) — override via var.sftp_schedule_expression in tfvars.
+# Default: rate(1 hour)  -  override via var.sftp_schedule_expression in tfvars.
 resource "aws_cloudwatch_event_rule" "sftp_schedule" {
   name                = "${var.project_name}-${var.environment}-sftp-schedule"
   description         = "Triggers SFTP Fetch Lambda on a recurring schedule to retrieve transaction files"
@@ -548,7 +542,7 @@ resource "aws_cloudwatch_event_target" "anomaly_detection_lambda" {
 
 
 # =============================================================================
-# Lambda Resource-Based Permissions — EventBridge
+# Lambda Resource-Based Permissions  -  EventBridge
 #
 # Grants EventBridge (events.amazonaws.com) permission to invoke each target
 # Lambda function. source_arn scopes the permission to the specific rule ARN,
@@ -575,12 +569,12 @@ resource "aws_lambda_permission" "anomaly_detection_eventbridge" {
 
 
 # =============================================================================
-# DynamoDB Stream Event Source Mappings — Phase 10
+# DynamoDB Stream Event Source Mappings  -  Phase 10
 #
 # Connects DynamoDB table streams directly to Lambda functions so Lambda
 # processes record change events in near-real-time as they arrive on the stream.
 # bisect_batch_on_function_error = true: when a batch fails, Lambda splits it
-# in half and retries each half independently — prevents a single poison-pill
+# in half and retries each half independently  -  prevents a single poison-pill
 # record from blocking the entire shard indefinitely.
 # =============================================================================
 
@@ -607,7 +601,7 @@ resource "aws_lambda_event_source_mapping" "accounts_stream" {
   bisect_batch_on_function_error = true
 
   # on_failure routes permanently failed batches to the Fraud Notification DLQ
-  # for manual review — requires sqs:SendMessage on the DLQ in the execution role
+  # for manual review  -  requires sqs:SendMessage on the DLQ in the execution role
   destination_config {
     on_failure {
       destination_arn = aws_sqs_queue.fraud_notification_dlq.arn

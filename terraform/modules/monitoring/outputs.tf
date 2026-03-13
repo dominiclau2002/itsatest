@@ -1,5 +1,5 @@
 # =============================================================================
-# Monitoring Module — Outputs
+# Monitoring Module  -  Outputs
 #
 # Exposes SNS topic ARN (for alarm notifications), CloudTrail ARN (for
 # compliance reference), and ALB access logs bucket ID (passed back to root

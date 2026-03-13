@@ -1,5 +1,5 @@
 # =============================================================================
-# CDN Module — Input Variables
+# CDN Module  -  Input Variables
 # =============================================================================
 
 variable "project_name" {
@@ -13,32 +13,32 @@ variable "environment" {
 }
 
 variable "aws_region" {
-  description = "AWS region (ap-southeast-1) — used for tagging context"
+  description = "AWS region (ap-southeast-1)  -  used for tagging context"
   type        = string
 }
 
 variable "s3_frontend_bucket_id" {
-  description = "Frontend S3 bucket ID (name) — used in OAC bucket association"
+  description = "Frontend S3 bucket ID (name)  -  used in OAC bucket association"
   type        = string
 }
 
 variable "s3_frontend_bucket_arn" {
-  description = "Frontend S3 bucket ARN — scopes the OAC bucket policy"
+  description = "Frontend S3 bucket ARN  -  scopes the OAC bucket policy"
   type        = string
 }
 
 variable "s3_frontend_bucket_domain_name" {
-  description = "Frontend S3 bucket regional domain name (bucket_regional_domain_name) — required for OAC; do NOT use bucket_domain_name (global form causes 403)"
+  description = "Frontend S3 bucket regional domain name (bucket_regional_domain_name)  -  required for OAC; do NOT use bucket_domain_name (global form causes 403)"
   type        = string
 }
 
 variable "alb_dns_name" {
-  description = "ALB DNS name — used as CloudFront API origin domain"
+  description = "ALB DNS name  -  used as CloudFront API origin domain"
   type        = string
 }
 
 variable "alb_zone_id" {
-  description = "ALB Route 53 hosted zone ID — not used in CDN module but passed through for root-level alias records"
+  description = "ALB Route 53 hosted zone ID  -  not used in CDN module but passed through for root-level alias records"
   type        = string
   default     = ""
 }

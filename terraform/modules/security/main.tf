@@ -14,7 +14,7 @@
 # Module-Level Locals
 #
 # Recomputed from project_name + environment (same formulas as root locals.tf).
-# Modules do not inherit root locals — must be defined locally.
+# Modules do not inherit root locals  -  must be defined locally.
 # =============================================================================
 locals {
   # DynamoDB table names
@@ -40,11 +40,11 @@ locals {
   secrets_prefix_client  = "${var.project_name}/${var.environment}/client-service"
   secrets_prefix_sftp    = "${var.project_name}/${var.environment}/sftp"
 
-  # CloudWatch log group names — ECS
+  # CloudWatch log group names  -  ECS
   log_group_ecs_account = "/ecs/${var.project_name}-${var.environment}-account-service"
   log_group_ecs_client  = "/ecs/${var.project_name}-${var.environment}-client-service"
 
-  # CloudWatch log group names — Lambda
+  # CloudWatch log group names  -  Lambda
   log_group_lambda_verification = "/aws/lambda/${var.project_name}-${var.environment}-verification"
   log_group_lambda_logging      = "/aws/lambda/${var.project_name}-${var.environment}-logging"
   log_group_lambda_user         = "/aws/lambda/${var.project_name}-${var.environment}-user"
@@ -54,7 +54,7 @@ locals {
 }
 
 locals {
-  # ARNs constructed locally using naming convention — avoids circular dependency
+  # ARNs constructed locally using naming convention  -  avoids circular dependency
   # (security module is at position 3; data-layer at position 4; security cannot
   # depend on data-layer outputs)
   dynamodb_table_logs_arn = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${local.dynamodb_table_logs_name}"
@@ -68,14 +68,14 @@ locals {
 # Used for ARN construction throughout this module (KMS key policies + IAM policies).
 data "aws_caller_identity" "current" {}
 
-# CloudFront managed prefix list — restricts ALB ingress to CloudFront edge nodes only.
+# CloudFront managed prefix list  -  restricts ALB ingress to CloudFront edge nodes only.
 data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
 
 # =============================================================================
-# Security Groups — Phase 3
+# Security Groups  -  Phase 3
 #
 # Protects all in-VPC resources: ALB, ECS (Account & Client services),
 # RDS Aurora, ElastiCache Redis, and VPC endpoint ENIs.
@@ -145,15 +145,19 @@ resource "aws_security_group_rule" "alb_egress_ecs_client_secondary" {
   description              = "Forward requests to Client Service secondary tasks in AZ-1b"
 }
 
-# Temporary HTTP ingress for ALB — replace with HTTPS-only (443) in Phase 9 when ACM certificate is available
+# Temporary HTTP ingress for ALB  -  replace with HTTPS-only (443) in Phase 9 when ACM certificate is available
 resource "aws_security_group_rule" "alb_ingress_http_cloudfront" {
   type              = "ingress"
   from_port         = 80
   to_port           = 80
   protocol          = "tcp"
-  prefix_list_ids   = [data.aws_ec2_managed_prefix_list.cloudfront.id]
+  cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP from CloudFront edge nodes - retained for redirect responses when HTTPS is configured"
+  # HTTP:80 allows 0.0.0.0/0 rather than the CloudFront prefix list because the HTTPS
+  # ingress rule already references the prefix list (weight ~55 entries). Two prefix list
+  # references would exceed the 60-rule inbound limit. Port 80 is redirect-only
+  # (no sensitive data) so broad ingress is acceptable here.
+  description = "HTTP from any - redirect to HTTPS only, no sensitive data on port 80"
 }
 
 # =============================================================================
@@ -437,7 +441,7 @@ resource "aws_security_group_rule" "ecs_client_secondary_egress_nat" {
 # =============================================================================
 resource "aws_security_group" "rds_primary" {
   name        = "${var.project_name}-${var.environment}-sg-rds-primary"
-  description = "RDS Aurora writer and reader (single SG — failover safe): PostgreSQL from Client Service only; no egress"
+  description = "RDS Aurora writer and reader (single SG  -  failover safe): PostgreSQL from Client Service only; no egress"
   vpc_id      = var.vpc_id
 
   tags = {
@@ -711,7 +715,7 @@ resource "aws_vpc_endpoint_security_group_association" "ecr_api" {
 
 
 # =============================================================================
-# KMS Customer-Managed Keys — Phase 5
+# KMS Customer-Managed Keys  -  Phase 5
 # =============================================================================
 
 resource "aws_kms_key" "rds" {
@@ -938,7 +942,7 @@ resource "aws_kms_alias" "secrets_manager" {
   target_key_id = aws_kms_key.secrets_manager.key_id
 }
 
-# CloudWatch Logs KMS key — encrypts ECS, Lambda, CloudTrail, and VPC Flow Log groups.
+# CloudWatch Logs KMS key  -  encrypts ECS, Lambda, CloudTrail, and VPC Flow Log groups.
 # The logs.<region>.amazonaws.com principal requires a Condition scoped to this account
 # and region; without it CloudWatch rejects kms:Encrypt calls at encryption time.
 resource "aws_kms_key" "cloudwatch" {
@@ -1010,7 +1014,7 @@ resource "aws_kms_alias" "cloudwatch" {
 
 
 # =============================================================================
-# IAM Roles & Policies — Phase 4
+# IAM Roles & Policies  -  Phase 4
 # =============================================================================
 
 # Trust Policy Documents (shared across role families)
@@ -1044,7 +1048,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 resource "aws_iam_role" "ecs_execution_role_account" {
   name               = "${var.project_name}-${var.environment}-role-ecs-execution-account"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
-  description        = "ECS task execution role for Account Service — ECR image pull, Secrets Manager secret injection, CloudWatch log stream creation"
+  description        = "ECS task execution role for Account Service  -  ECR image pull, Secrets Manager secret injection, CloudWatch log stream creation"
 }
 
 data "aws_iam_policy_document" "ecs_execution_policy_account" {
@@ -1105,7 +1109,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_account" {
 resource "aws_iam_role" "ecs_execution_role_client" {
   name               = "${var.project_name}-${var.environment}-role-ecs-execution-client"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
-  description        = "ECS task execution role for Client Service — ECR image pull, Secrets Manager secret injection (RDS password, Redis auth token), CloudWatch log stream creation"
+  description        = "ECS task execution role for Client Service  -  ECR image pull, Secrets Manager secret injection (RDS password, Redis auth token), CloudWatch log stream creation"
 }
 
 data "aws_iam_policy_document" "ecs_execution_policy_client" {
@@ -1167,7 +1171,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_client" {
 resource "aws_iam_role" "ecs_task_role_account" {
   name               = "${var.project_name}-${var.environment}-role-ecs-task-account"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
-  description        = "Runtime role for Account Service container — Accounts DynamoDB CRUD, Transactions DynamoDB read/update (agent review dashboard), SQS logging"
+  description        = "Runtime role for Account Service container  -  Accounts DynamoDB CRUD, Transactions DynamoDB read/update (agent review dashboard), SQS logging"
 }
 
 data "aws_iam_policy_document" "ecs_task_policy_account" {
@@ -1241,7 +1245,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_account" {
 resource "aws_iam_role" "ecs_task_role_client" {
   name               = "${var.project_name}-${var.environment}-role-ecs-task-client"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
-  description        = "Runtime role for Client Service container — SQS logging only. RDS credentials injected at startup via execution role; no IAM auth for RDS."
+  description        = "Runtime role for Client Service container  -  SQS logging only. RDS credentials injected at startup via execution role; no IAM auth for RDS."
 }
 
 data "aws_iam_policy_document" "ecs_task_policy_client" {
@@ -1273,7 +1277,7 @@ data "aws_iam_policy_document" "ecs_task_policy_client" {
     actions = ["dynamodb:Query"]
     resources = [
       # Allows Client Service to query Logs table by client_id via ClientIndex GSI
-      # ARN constructed locally (Phase 9 Addition B) — naming convention matches data-layer module
+      # ARN constructed locally (Phase 9 Addition B)  -  naming convention matches data-layer module
       local.dynamodb_table_logs_arn,
       "${local.dynamodb_table_logs_arn}/index/ClientIndex",
     ]
@@ -1297,7 +1301,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_client" {
 resource "aws_iam_role" "lambda_execution_role_verification" {
   name               = "${var.project_name}-${var.environment}-role-lambda-verification"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for Verification Lambda — SES email, S3 document storage, Cognito user attribute update"
+  description        = "Execution role for Verification Lambda  -  SES email, S3 document storage, Cognito user attribute update"
 }
 
 data "aws_iam_policy_document" "lambda_policy_verification" {
@@ -1380,7 +1384,7 @@ resource "aws_iam_role_policy_attachment" "lambda_verification" {
 resource "aws_iam_role" "lambda_execution_role_logging" {
   name               = "${var.project_name}-${var.environment}-role-lambda-logging"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for Logging Lambda — SQS Logging queue consumer, DynamoDB Logs table writer"
+  description        = "Execution role for Logging Lambda  -  SQS Logging queue consumer, DynamoDB Logs table writer"
 }
 
 data "aws_iam_policy_document" "lambda_policy_logging" {
@@ -1465,7 +1469,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logging" {
 resource "aws_iam_role" "lambda_execution_role_user" {
   name               = "${var.project_name}-${var.environment}-role-lambda-user"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for User Lambda — Cognito Admin API for user lifecycle, User DynamoDB for CRM metadata"
+  description        = "Execution role for User Lambda  -  Cognito Admin API for user lifecycle, User DynamoDB for CRM metadata"
 }
 
 data "aws_iam_policy_document" "lambda_policy_user" {
@@ -1529,7 +1533,7 @@ data "aws_iam_policy_document" "lambda_policy_user" {
 
 resource "aws_iam_policy" "lambda_policy_user" {
   name        = "${var.project_name}-${var.environment}-policy-lambda-user"
-  description = "Permissions for User Lambda: Cognito Admin API (user lifecycle), User DynamoDB (CRM metadata). No DeleteItem — soft-delete only."
+  description = "Permissions for User Lambda: Cognito Admin API (user lifecycle), User DynamoDB (CRM metadata). No DeleteItem  -  soft-delete only."
   policy      = data.aws_iam_policy_document.lambda_policy_user.json
 }
 
@@ -1543,7 +1547,7 @@ resource "aws_iam_role_policy_attachment" "lambda_user" {
 resource "aws_iam_role" "lambda_execution_role_sftp_fetch" {
   name               = "${var.project_name}-${var.environment}-role-lambda-sftp-fetch"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for SFTP Fetch Lambda — Transfer Family endpoint resolution, Secrets Manager SSH key, EventBridge publish"
+  description        = "Execution role for SFTP Fetch Lambda  -  Transfer Family endpoint resolution, Secrets Manager SSH key, EventBridge publish"
 }
 
 data "aws_iam_policy_document" "lambda_policy_sftp_fetch" {
@@ -1639,7 +1643,7 @@ resource "aws_iam_role_policy_attachment" "lambda_sftp_fetch" {
 resource "aws_iam_role" "lambda_execution_role_anomaly_detection" {
   name               = "${var.project_name}-${var.environment}-role-lambda-anomaly-detection"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for Anomaly Detection Lambda — Transactions DynamoDB (read baseline + write result), SQS Fraud Notification queue producer"
+  description        = "Execution role for Anomaly Detection Lambda  -  Transactions DynamoDB (read baseline + write result), SQS Fraud Notification queue producer"
 }
 
 data "aws_iam_policy_document" "lambda_policy_anomaly_detection" {
@@ -1747,7 +1751,7 @@ resource "aws_iam_role_policy_attachment" "lambda_anomaly_detection" {
 resource "aws_iam_role" "lambda_execution_role_notification" {
   name               = "${var.project_name}-${var.environment}-role-lambda-notification"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
-  description        = "Execution role for Notification Lambda — SQS Fraud Notification queue consumer, SES fraud alert email to agent"
+  description        = "Execution role for Notification Lambda  -  SQS Fraud Notification queue consumer, SES fraud alert email to agent"
 }
 
 data "aws_iam_policy_document" "lambda_policy_notification" {

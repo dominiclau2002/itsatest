@@ -1,5 +1,5 @@
 # =============================================================================
-# Auth Module — Cognito User Pool, OAuth 2.0 App Client, SES Email Identity
+# Auth Module  -  Cognito User Pool, OAuth 2.0 App Client, SES Email Identity
 #
 # This module must never reference module.security outputs to avoid circular
 # dependency. Dependency direction: auth -> security (auth outputs feed into
@@ -9,24 +9,24 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Data source — needed for SES ARN construction in outputs
+# Data source  -  needed for SES ARN construction in outputs
 # -----------------------------------------------------------------------------
 data "aws_caller_identity" "current" {}
 
 # -----------------------------------------------------------------------------
-# Cognito User Pool — identity store with MFA enforcement and SRP password security
+# Cognito User Pool  -  identity store with MFA enforcement and SRP password security
 # -----------------------------------------------------------------------------
 resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-${var.environment}-user-pool"
 
-  # MFA is required for all users (TOTP only — no SMS to avoid SNS complexity)
+  # MFA is required for all users (TOTP only  -  no SMS to avoid SNS complexity)
   mfa_configuration = "ON"
 
   software_token_mfa_configuration {
     enabled = true
   }
 
-  # Password policy — enforced server-side by Cognito using SRP protocol
+  # Password policy  -  enforced server-side by Cognito using SRP protocol
   password_policy {
     minimum_length                   = 12
     require_lowercase                = true
@@ -50,7 +50,7 @@ resource "aws_cognito_user_pool" "main" {
     }
   }
 
-  # Email attribute — required and mutable
+  # Email attribute  -  required and mutable
   schema {
     name                     = "email"
     attribute_data_type      = "String"
@@ -71,7 +71,7 @@ resource "aws_cognito_user_pool" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# Cognito User Pool Domain — hosted UI endpoint for OAuth 2.0 Authorization Code flow
+# Cognito User Pool Domain  -  hosted UI endpoint for OAuth 2.0 Authorization Code flow
 # Domain prefix must be globally unique across all AWS accounts
 # -----------------------------------------------------------------------------
 resource "aws_cognito_user_pool_domain" "main" {
@@ -80,13 +80,13 @@ resource "aws_cognito_user_pool_domain" "main" {
 }
 
 # -----------------------------------------------------------------------------
-# Cognito User Pool Client — public client for SPA (PKCE, no client secret)
+# Cognito User Pool Client  -  public client for SPA (PKCE, no client secret)
 # -----------------------------------------------------------------------------
 resource "aws_cognito_user_pool_client" "main" {
   name         = "${var.project_name}-${var.environment}-app-client"
   user_pool_id = aws_cognito_user_pool.main.id
 
-  # Public client — SPA uses PKCE for token exchange, no client secret needed
+  # Public client  -  SPA uses PKCE for token exchange, no client secret needed
   generate_secret = false
 
   # OAuth 2.0 Authorization Code flow with PKCE
@@ -95,13 +95,13 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_scopes                 = ["openid", "profile", "email"]
   supported_identity_providers         = ["COGNITO"]
 
-  # Redirect URLs — environment-specific (localhost for dev, CloudFront for prod)
+  # Redirect URLs  -  environment-specific (localhost for dev, CloudFront for prod)
   callback_urls = var.callback_urls
   logout_urls   = var.logout_urls
 
   # Only allow refresh token auth from the SPA client
   # Admin API calls from User Lambda (AdminInitiateAuth) bypass app client
-  # explicit_auth_flows — these only govern what the SPA client can initiate
+  # explicit_auth_flows  -  these only govern what the SPA client can initiate
   explicit_auth_flows = ["ALLOW_REFRESH_TOKEN_AUTH"]
 
   # Token validity
@@ -115,30 +115,30 @@ resource "aws_cognito_user_pool_client" "main" {
     refresh_token = "days"
   }
 
-  # Security — prevent username enumeration via error messages
+  # Security  -  prevent username enumeration via error messages
   prevent_user_existence_errors = "ENABLED"
 }
 
 # -----------------------------------------------------------------------------
-# Cognito User Groups — RBAC via cognito:groups claim in JWT access tokens
+# Cognito User Groups  -  RBAC via cognito:groups claim in JWT access tokens
 # -----------------------------------------------------------------------------
 
-# Admin group — full access to accounts, clients, users, and system configuration
+# Admin group  -  full access to accounts, clients, users, and system configuration
 resource "aws_cognito_user_group" "admin" {
   name         = "Admin"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "CRM Administrators — full access to accounts, clients, users, and system configuration"
+  description  = "CRM Administrators  -  full access to accounts, clients, users, and system configuration"
 }
 
-# Agent group — client management and transaction review access
+# Agent group  -  client management and transaction review access
 resource "aws_cognito_user_group" "agent" {
   name         = "Agent"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "CRM Agents — client management and transaction review access"
+  description  = "CRM Agents  -  client management and transaction review access"
 }
 
 # -----------------------------------------------------------------------------
-# SES Email Identity — verified sender for Verification and Notification Lambdas
+# SES Email Identity  -  verified sender for Verification and Notification Lambdas
 #
 # After first terraform apply, manual email verification is required:
 # check the inbox of ses_sender_email and click the verification link.

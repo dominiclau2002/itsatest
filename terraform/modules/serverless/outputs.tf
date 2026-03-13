@@ -1,5 +1,5 @@
 # =============================================================================
-# Serverless Module — Outputs
+# Serverless Module  -  Outputs
 #
 # Exposes SQS queue URLs and ARNs (needed by root outputs.tf and compute module
 # to populate SQS_QUEUE_LOGGING_URL in ECS task env vars), Lambda ARNs (for
@@ -13,7 +13,7 @@
 # =============================================================================
 
 output "sqs_queue_logging_url" {
-  description = "URL of the Logging SQS queue — injected into ECS task env var SQS_QUEUE_LOGGING_URL"
+  description = "URL of the Logging SQS queue  -  injected into ECS task env var SQS_QUEUE_LOGGING_URL"
   value       = aws_sqs_queue.logging.url
 }
 
@@ -23,7 +23,7 @@ output "sqs_queue_logging_arn" {
 }
 
 output "sqs_queue_fraud_notification_url" {
-  description = "URL of the Fraud Notification SQS queue — injected into Anomaly Detection Lambda env var"
+  description = "URL of the Fraud Notification SQS queue  -  injected into Anomaly Detection Lambda env var"
   value       = aws_sqs_queue.fraud_notification.url
 }
 
@@ -89,35 +89,35 @@ output "eventbridge_transaction_review_arn" {
 
 
 # =============================================================================
-# Phase 10 — Function Names (needed by monitoring module alarm dimensions)
+# Phase 10  -  Function Names (needed by monitoring module alarm dimensions)
 # =============================================================================
 
 output "lambda_verification_function_name" {
-  description = "Verification Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  description = "Verification Lambda function name  -  used as CloudWatch alarm FunctionName dimension"
   value       = aws_lambda_function.verification.function_name
 }
 
 output "lambda_anomaly_detection_function_name" {
-  description = "Anomaly Detection Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  description = "Anomaly Detection Lambda function name  -  used as CloudWatch alarm FunctionName dimension"
   value       = aws_lambda_function.anomaly_detection.function_name
 }
 
 output "lambda_notification_function_name" {
-  description = "Notification Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  description = "Notification Lambda function name  -  used as CloudWatch alarm FunctionName dimension"
   value       = aws_lambda_function.notification.function_name
 }
 
 output "lambda_logging_function_name" {
-  description = "Logging Lambda function name — used as CloudWatch alarm FunctionName dimension"
+  description = "Logging Lambda function name  -  used as CloudWatch alarm FunctionName dimension"
   value       = aws_lambda_function.logging.function_name
 }
 
 output "sqs_fraud_notification_queue_name" {
-  description = "Fraud Notification SQS queue name — used as CloudWatch alarm QueueName dimension"
+  description = "Fraud Notification SQS queue name  -  used as CloudWatch alarm QueueName dimension"
   value       = aws_sqs_queue.fraud_notification.name
 }
 
 output "sqs_fraud_notification_dlq_name" {
-  description = "Fraud Notification dead-letter queue name — used as CloudWatch alarm QueueName dimension"
+  description = "Fraud Notification dead-letter queue name  -  used as CloudWatch alarm QueueName dimension"
   value       = aws_sqs_queue.fraud_notification_dlq.name
 }

@@ -24,26 +24,26 @@ variable "environment" {
 }
 
 variable "secretsmanager_endpoint_id" {
-  description = "VPC endpoint ID for Secrets Manager — used for SG association"
+  description = "VPC endpoint ID for Secrets Manager  -  used for SG association"
   type        = string
 }
 
 variable "ecr_dkr_endpoint_id" {
-  description = "VPC endpoint ID for ECR DKR — used for SG association"
+  description = "VPC endpoint ID for ECR DKR  -  used for SG association"
   type        = string
 }
 
 variable "ecr_api_endpoint_id" {
-  description = "VPC endpoint ID for ECR API — used for SG association"
+  description = "VPC endpoint ID for ECR API  -  used for SG association"
   type        = string
 }
 
 variable "cognito_user_pool_arn" {
-  description = "Full ARN of the Cognito user pool — used to scope IAM policies (replaces userpool/* wildcard)"
+  description = "Full ARN of the Cognito user pool  -  used to scope IAM policies (replaces userpool/* wildcard)"
   type        = string
 }
 
 variable "ses_identity_arn" {
-  description = "Full ARN of the SES email identity — used to scope IAM policies (replaces identity/* wildcard)"
+  description = "Full ARN of the SES email identity  -  used to scope IAM policies (replaces identity/* wildcard)"
   type        = string
 }

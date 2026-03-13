@@ -55,7 +55,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "sftp" {
 
   # CKV_AWS_300: abort incomplete multipart uploads bucket-wide after 7 days.
   # A separate rule with an empty filter is required because CKV_AWS_300 checks for
-  # a global abort rule — the prefix-scoped expiration rule below does not satisfy it.
+  # a global abort rule  -  the prefix-scoped expiration rule below does not satisfy it.
   rule {
     id     = "abort-incomplete-multipart"
     status = "Enabled"
@@ -89,11 +89,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "sftp" {
 
 
 # =============================================================================
-# Documents S3 Bucket — Phase 9
+# Documents S3 Bucket  -  Phase 9
 #
 # Stores KYC documents uploaded by the Verification Lambda (e.g., identity
 # proofs, signed agreements). Encrypted with the shared S3 KMS key.
-# No lifecycle rule — documents are retained indefinitely; archival policy
+# No lifecycle rule  -  documents are retained indefinitely; archival policy
 # deferred to Phase 10.
 # =============================================================================
 
@@ -137,13 +137,13 @@ resource "aws_s3_bucket_public_access_block" "documents" {
 
 
 # =============================================================================
-# Frontend S3 Bucket — Phase 9
+# Frontend S3 Bucket  -  Phase 9
 #
 # Hosts the compiled React SPA static assets (HTML, JS, CSS, images).
-# Kept fully private — no public access, no static website hosting. CloudFront
+# Kept fully private  -  no public access, no static website hosting. CloudFront
 # serves content via OAC (SigV4 signed requests); the bucket policy (in the
 # cdn module, to avoid circular dependency) grants only CloudFront read access.
-# Use bucket_regional_domain_name (not bucket_domain_name) for OAC — the global
+# Use bucket_regional_domain_name (not bucket_domain_name) for OAC  -  the global
 # form causes 403 errors because it resolves to a different endpoint than OAC expects.
 # =============================================================================
 
@@ -187,18 +187,18 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 
 
 # =============================================================================
-# ALB Access Logs S3 Bucket — CKV_AWS_91
+# ALB Access Logs S3 Bucket  -  CKV_AWS_91
 #
 # Receives ALB access logs delivered by the ELB service account. Created in
 # the storage module (not monitoring) so the compute module can reference the
 # bucket name without creating a circular dependency (storage → compute is safe;
 # monitoring → compute exists for alarm dimensions, preventing compute → monitoring).
 #
-# ALB log delivery does NOT support KMS encryption — bucket must use AES256.
+# ALB log delivery does NOT support KMS encryption  -  bucket must use AES256.
 # The ELB service account ARN is resolved via a data source (region-agnostic).
 # =============================================================================
 
-# Regional ELB service account — resolves to the correct account ID for the
+# Regional ELB service account  -  resolves to the correct account ID for the
 # current AWS region automatically, avoiding hardcoded region-specific IDs.
 data "aws_elb_service_account" "main" {}
 
@@ -212,7 +212,7 @@ resource "aws_s3_bucket" "alb_logs" {
   }
 }
 
-# ALB log delivery does NOT support KMS — must use AES256
+# ALB log delivery does NOT support KMS  -  must use AES256
 resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
   bucket = aws_s3_bucket.alb_logs.id
 
@@ -232,7 +232,7 @@ resource "aws_s3_bucket_public_access_block" "alb_logs" {
   restrict_public_buckets = true
 }
 
-# Expire ALB access logs after 90 days — operational data, shorter retention than audit logs
+# Expire ALB access logs after 90 days  -  operational data, shorter retention than audit logs
 resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   bucket = aws_s3_bucket.alb_logs.id
 
