@@ -26,12 +26,9 @@ terraform {
   # running `terraform init`. See CLAUDE.md Commands section for bootstrap commands.
   # use_lockfile (Terraform 1.10+): native S3 conditional-write locking  -  no DynamoDB table needed.
   backend "s3" {
-    bucket       = "itsa-testing-setup-dev-terraform-state"
-    key          = "dev/terraform.tfstate"
     region       = "ap-southeast-1"
     use_lockfile = true
     encrypt      = true
-    profile      = "dominic-admin"
   }
 }
 
@@ -46,8 +43,8 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Project     = var.project_name
-      CostCenter  = "CS301"
-      CreatedDate = "2026-02-21"
+      CostCenter  = var.cost_center
+      CreatedDate = var.created_date
     }
   }
 }
@@ -65,8 +62,8 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Project     = var.project_name
-      CostCenter  = "CS301"
-      CreatedDate = "2026-02-21"
+      CostCenter  = var.cost_center
+      CreatedDate = var.created_date
     }
   }
 }

@@ -153,6 +153,7 @@ module "data-layer" {
   rds_skip_final_snapshot             = var.rds_skip_final_snapshot
   elasticache_node_type               = var.elasticache_node_type
   elasticache_snapshot_retention_days = var.elasticache_snapshot_retention_days
+  dynamodb_deletion_protection        = var.dynamodb_deletion_protection
 }
 
 module "storage" {
@@ -282,6 +283,10 @@ module "compute" {
 
   # ALB access logs bucket (from storage module  -  avoids circular dep with monitoring)
   alb_logs_bucket_name = module.storage.alb_logs_bucket_name
+
+  # Phase 10  -  ECS Auto Scaling bounds (override via tfvars per environment)
+  ecs_min_capacity = var.ecs_min_capacity
+  ecs_max_capacity = var.ecs_max_capacity
 }
 
 module "cdn" {

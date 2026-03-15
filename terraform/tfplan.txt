@@ -1,3 +1,25 @@
+[0m[1mmodule.serverless.data.archive_file.lambda_placeholder: Reading...[0m[0m
+[0m[1mmodule.serverless.data.archive_file.lambda_placeholder: Read complete after 0s [id=d06e7c47e08beac62500c3d2244b25088d99cc08][0m
+[0m[1mmodule.auth.data.aws_caller_identity.current: Reading...[0m[0m
+[0m[1mmodule.storage.data.aws_elb_service_account.main: Reading...[0m[0m
+[0m[1mmodule.monitoring.data.aws_caller_identity.current: Reading...[0m[0m
+[0m[1mmodule.storage.data.aws_elb_service_account.main: Read complete after 0s [id=114774131450][0m
+[0m[1mmodule.data-layer.data.aws_iam_policy_document.rds_monitoring_assume_role: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_iam_policy_document.lambda_assume_role: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_ec2_managed_prefix_list.cloudfront: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_iam_policy_document.lambda_assume_role: Read complete after 0s [id=2690255455][0m
+[0m[1mmodule.data-layer.data.aws_iam_policy_document.rds_monitoring_assume_role: Read complete after 0s [id=76086537][0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_assume_role: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_assume_role: Read complete after 0s [id=1077804475][0m
+[0m[1mmodule.auth.data.aws_caller_identity.current: Read complete after 0s [id=117370071826][0m
+[0m[1mmodule.security.data.aws_caller_identity.current: Reading...[0m[0m
+[0m[1mmodule.monitoring.data.aws_caller_identity.current: Read complete after 0s [id=117370071826][0m
+[0m[1mmodule.security.data.aws_caller_identity.current: Read complete after 0s [id=117370071826][0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_execution_policy_account: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_execution_policy_client: Reading...[0m[0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_execution_policy_client: Read complete after 0s [id=925654442][0m
+[0m[1mmodule.security.data.aws_iam_policy_document.ecs_execution_policy_account: Read complete after 0s [id=2940557305][0m
+[0m[1mmodule.security.data.aws_ec2_managed_prefix_list.cloudfront: Read complete after 1s [id=pl-31a34658][0m
 
 Terraform used the selected providers to generate the following execution
 plan. Resource actions are indicated with the following symbols:
@@ -8,7 +30,7 @@ Terraform will perform the following actions:
 
 [1m  # module.auth.aws_cognito_user_group.admin[0m will be created
 [0m  [32m+[0m[0m resource "aws_cognito_user_group" "admin" {
-      [32m+[0m[0m description  = "CRM Administrators — full access to accounts, clients, users, and system configuration"
+      [32m+[0m[0m description  = "CRM Administrators  -  full access to accounts, clients, users, and system configuration"
       [32m+[0m[0m id           = (known after apply)
       [32m+[0m[0m name         = "Admin"
       [32m+[0m[0m user_pool_id = (known after apply)
@@ -16,7 +38,7 @@ Terraform will perform the following actions:
 
 [1m  # module.auth.aws_cognito_user_group.agent[0m will be created
 [0m  [32m+[0m[0m resource "aws_cognito_user_group" "agent" {
-      [32m+[0m[0m description  = "CRM Agents — client management and transaction review access"
+      [32m+[0m[0m description  = "CRM Agents  -  client management and transaction review access"
       [32m+[0m[0m id           = (known after apply)
       [32m+[0m[0m name         = "Agent"
       [32m+[0m[0m user_pool_id = (known after apply)
@@ -311,14 +333,14 @@ Terraform will perform the following actions:
 
       [32m+[0m[0m viewer_certificate {
           [32m+[0m[0m cloudfront_default_certificate = true
-          [32m+[0m[0m minimum_protocol_version       = "TLSv1.2_2021"
+          [32m+[0m[0m minimum_protocol_version       = "TLSv1"
         }
     }
 
 [1m  # module.cdn.aws_cloudfront_origin_access_control.frontend[0m will be created
 [0m  [32m+[0m[0m resource "aws_cloudfront_origin_access_control" "frontend" {
       [32m+[0m[0m arn                               = (known after apply)
-      [32m+[0m[0m description                       = "OAC for CRM frontend S3 bucket — restricts S3 access to this CloudFront distribution only via SigV4 signing"
+      [32m+[0m[0m description                       = "OAC for CRM frontend S3 bucket  -  restricts S3 access to this CloudFront distribution only via SigV4 signing"
       [32m+[0m[0m etag                              = (known after apply)
       [32m+[0m[0m id                                = (known after apply)
       [32m+[0m[0m name                              = "itsa-testing-setup-dev-oac-frontend"
@@ -483,7 +505,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m application_integration_url = (known after apply)
       [32m+[0m[0m arn                         = (known after apply)
       [32m+[0m[0m capacity                    = (known after apply)
-      [32m+[0m[0m description                 = "WAF Web ACL protecting CRM CloudFront distribution — Common rules, Known bad inputs, SQLi, IP rate limiting"
+      [32m+[0m[0m description                 = "WAF Web ACL protecting CRM CloudFront distribution  -  Common rules, Known bad inputs, SQLi, IP rate limiting"
       [32m+[0m[0m id                          = (known after apply)
       [32m+[0m[0m lock_token                  = (known after apply)
       [32m+[0m[0m name                        = "itsa-testing-setup-dev-waf-cloudfront"
@@ -1742,7 +1764,7 @@ Terraform will perform the following actions:
 [1m  # module.data-layer.aws_db_subnet_group.main[0m will be created
 [0m  [32m+[0m[0m resource "aws_db_subnet_group" "main" {
       [32m+[0m[0m arn                     = (known after apply)
-      [32m+[0m[0m description             = "Subnet group for Aurora PostgreSQL cluster — private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
+      [32m+[0m[0m description             = "Subnet group for Aurora PostgreSQL cluster  -  private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
       [32m+[0m[0m id                      = (known after apply)
       [32m+[0m[0m name                    = "itsa-testing-setup-dev-db-subnet-group"
       [32m+[0m[0m name_prefix             = (known after apply)
@@ -2030,7 +2052,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m cluster_mode                   = (known after apply)
       [32m+[0m[0m configuration_endpoint_address = (known after apply)
       [32m+[0m[0m data_tiering_enabled           = (known after apply)
-      [32m+[0m[0m description                    = "Redis cache for Account Service — single-node primary in AZ-1a (no replica)"
+      [32m+[0m[0m description                    = "Redis cache for Account Service  -  single-node primary in AZ-1a (no replica)"
       [32m+[0m[0m engine                         = "redis"
       [32m+[0m[0m engine_version                 = "7.0"
       [32m+[0m[0m engine_version_actual          = (known after apply)
@@ -2088,7 +2110,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m cluster_mode                   = (known after apply)
       [32m+[0m[0m configuration_endpoint_address = (known after apply)
       [32m+[0m[0m data_tiering_enabled           = (known after apply)
-      [32m+[0m[0m description                    = "Redis cache for Client Service — single-node primary in AZ-1a (no replica)"
+      [32m+[0m[0m description                    = "Redis cache for Client Service  -  single-node primary in AZ-1a (no replica)"
       [32m+[0m[0m engine                         = "redis"
       [32m+[0m[0m engine_version                 = "7.0"
       [32m+[0m[0m engine_version_actual          = (known after apply)
@@ -2136,7 +2158,7 @@ Terraform will perform the following actions:
 [1m  # module.data-layer.aws_elasticache_subnet_group.main[0m will be created
 [0m  [32m+[0m[0m resource "aws_elasticache_subnet_group" "main" {
       [32m+[0m[0m arn         = (known after apply)
-      [32m+[0m[0m description = "Subnet group for ElastiCache Redis clusters — private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
+      [32m+[0m[0m description = "Subnet group for ElastiCache Redis clusters  -  private-db-1 (AZ-1a) and private-db-2 (AZ-1b)"
       [32m+[0m[0m id          = (known after apply)
       [32m+[0m[0m name        = "itsa-testing-setup-dev-elasticache-subnet-group"
       [32m+[0m[0m subnet_ids  = (known after apply)
@@ -2201,184 +2223,10 @@ Terraform will perform the following actions:
       [32m+[0m[0m role       = "itsa-testing-setup-dev-role-rds-monitoring"
     }
 
-[1m  # module.data-layer.aws_rds_cluster.primary[0m will be created
-[0m  [32m+[0m[0m resource "aws_rds_cluster" "primary" {
-      [32m+[0m[0m allocated_storage                     = (known after apply)
-      [32m+[0m[0m apply_immediately                     = (known after apply)
-      [32m+[0m[0m arn                                   = (known after apply)
-      [32m+[0m[0m availability_zones                    = (known after apply)
-      [32m+[0m[0m backup_retention_period               = 7
-      [32m+[0m[0m ca_certificate_identifier             = (known after apply)
-      [32m+[0m[0m ca_certificate_valid_till             = (known after apply)
-      [32m+[0m[0m cluster_identifier                    = "itsa-testing-setup-dev-aurora"
-      [32m+[0m[0m cluster_identifier_prefix             = (known after apply)
-      [32m+[0m[0m cluster_members                       = (known after apply)
-      [32m+[0m[0m cluster_resource_id                   = (known after apply)
-      [32m+[0m[0m cluster_scalability_type              = (known after apply)
-      [32m+[0m[0m copy_tags_to_snapshot                 = true
-      [32m+[0m[0m database_insights_mode                = (known after apply)
-      [32m+[0m[0m database_name                         = "crmdb"
-      [32m+[0m[0m db_cluster_parameter_group_name       = "itsa-testing-setup-dev-aurora-pg15-params"
-      [32m+[0m[0m db_subnet_group_name                  = "itsa-testing-setup-dev-db-subnet-group"
-      [32m+[0m[0m db_system_id                          = (known after apply)
-      [32m+[0m[0m delete_automated_backups              = true
-      [32m+[0m[0m deletion_protection                   = false
-      [32m+[0m[0m enable_global_write_forwarding        = false
-      [32m+[0m[0m enable_http_endpoint                  = false
-      [32m+[0m[0m enable_local_write_forwarding         = false
-      [32m+[0m[0m enabled_cloudwatch_logs_exports       = [
-          [32m+[0m[0m "postgresql",
-          [32m+[0m[0m "upgrade",
-        ]
-      [32m+[0m[0m endpoint                              = (known after apply)
-      [32m+[0m[0m engine                                = "aurora-postgresql"
-      [32m+[0m[0m engine_lifecycle_support              = (known after apply)
-      [32m+[0m[0m engine_mode                           = "provisioned"
-      [32m+[0m[0m engine_version                        = "15.4"
-      [32m+[0m[0m engine_version_actual                 = (known after apply)
-      [32m+[0m[0m final_snapshot_identifier             = "itsa-testing-setup-dev-aurora-final-snapshot"
-      [32m+[0m[0m hosted_zone_id                        = (known after apply)
-      [32m+[0m[0m iam_database_authentication_enabled   = true
-      [32m+[0m[0m iam_roles                             = (known after apply)
-      [32m+[0m[0m id                                    = (known after apply)
-      [32m+[0m[0m kms_key_id                            = (known after apply)
-      [32m+[0m[0m master_password                       = (sensitive value)
-      [32m+[0m[0m master_password_wo                    = (write-only attribute)
-      [32m+[0m[0m master_user_secret                    = (known after apply)
-      [32m+[0m[0m master_user_secret_kms_key_id         = (known after apply)
-      [32m+[0m[0m master_username                       = "crmadmin"
-      [32m+[0m[0m monitoring_interval                   = (known after apply)
-      [32m+[0m[0m monitoring_role_arn                   = (known after apply)
-      [32m+[0m[0m network_type                          = (known after apply)
-      [32m+[0m[0m performance_insights_kms_key_id       = (known after apply)
-      [32m+[0m[0m performance_insights_retention_period = (known after apply)
-      [32m+[0m[0m port                                  = (known after apply)
-      [32m+[0m[0m preferred_backup_window               = "02:00-03:00"
-      [32m+[0m[0m preferred_maintenance_window          = (known after apply)
-      [32m+[0m[0m reader_endpoint                       = (known after apply)
-      [32m+[0m[0m skip_final_snapshot                   = true
-      [32m+[0m[0m storage_encrypted                     = true
-      [32m+[0m[0m storage_type                          = (known after apply)
-      [32m+[0m[0m tags                                  = {
-          [32m+[0m[0m "Component" = "rds"
-          [32m+[0m[0m "Name"      = "itsa-testing-setup-dev-aurora"
-        }
-      [32m+[0m[0m tags_all                              = {
-          [32m+[0m[0m "Component"   = "rds"
-          [32m+[0m[0m "CostCenter"  = "CS301"
-          [32m+[0m[0m "CreatedDate" = "2026-02-21"
-          [32m+[0m[0m "Environment" = "dev"
-          [32m+[0m[0m "ManagedBy"   = "Terraform"
-          [32m+[0m[0m "Name"        = "itsa-testing-setup-dev-aurora"
-          [32m+[0m[0m "Project"     = "itsa-testing-setup"
-        }
-      [32m+[0m[0m vpc_security_group_ids                = (known after apply)
-    }
-
-[1m  # module.data-layer.aws_rds_cluster_instance.reader[0m will be created
-[0m  [32m+[0m[0m resource "aws_rds_cluster_instance" "reader" {
-      [32m+[0m[0m apply_immediately                     = (known after apply)
-      [32m+[0m[0m arn                                   = (known after apply)
-      [32m+[0m[0m auto_minor_version_upgrade            = true
-      [32m+[0m[0m availability_zone                     = "ap-southeast-1b"
-      [32m+[0m[0m ca_cert_identifier                    = (known after apply)
-      [32m+[0m[0m cluster_identifier                    = (known after apply)
-      [32m+[0m[0m copy_tags_to_snapshot                 = false
-      [32m+[0m[0m db_parameter_group_name               = (known after apply)
-      [32m+[0m[0m db_subnet_group_name                  = (known after apply)
-      [32m+[0m[0m dbi_resource_id                       = (known after apply)
-      [32m+[0m[0m endpoint                              = (known after apply)
-      [32m+[0m[0m engine                                = "aurora-postgresql"
-      [32m+[0m[0m engine_version                        = "15.4"
-      [32m+[0m[0m engine_version_actual                 = (known after apply)
-      [32m+[0m[0m force_destroy                         = false
-      [32m+[0m[0m id                                    = (known after apply)
-      [32m+[0m[0m identifier                            = "itsa-testing-setup-dev-aurora-reader"
-      [32m+[0m[0m identifier_prefix                     = (known after apply)
-      [32m+[0m[0m instance_class                        = "db.t3.medium"
-      [32m+[0m[0m kms_key_id                            = (known after apply)
-      [32m+[0m[0m monitoring_interval                   = 60
-      [32m+[0m[0m monitoring_role_arn                   = (known after apply)
-      [32m+[0m[0m network_type                          = (known after apply)
-      [32m+[0m[0m performance_insights_enabled          = true
-      [32m+[0m[0m performance_insights_kms_key_id       = (known after apply)
-      [32m+[0m[0m performance_insights_retention_period = (known after apply)
-      [32m+[0m[0m port                                  = (known after apply)
-      [32m+[0m[0m preferred_backup_window               = (known after apply)
-      [32m+[0m[0m preferred_maintenance_window          = (known after apply)
-      [32m+[0m[0m promotion_tier                        = 1
-      [32m+[0m[0m publicly_accessible                   = (known after apply)
-      [32m+[0m[0m storage_encrypted                     = (known after apply)
-      [32m+[0m[0m tags                                  = {
-          [32m+[0m[0m "Component" = "rds"
-          [32m+[0m[0m "Name"      = "itsa-testing-setup-dev-aurora-reader"
-        }
-      [32m+[0m[0m tags_all                              = {
-          [32m+[0m[0m "Component"   = "rds"
-          [32m+[0m[0m "CostCenter"  = "CS301"
-          [32m+[0m[0m "CreatedDate" = "2026-02-21"
-          [32m+[0m[0m "Environment" = "dev"
-          [32m+[0m[0m "ManagedBy"   = "Terraform"
-          [32m+[0m[0m "Name"        = "itsa-testing-setup-dev-aurora-reader"
-          [32m+[0m[0m "Project"     = "itsa-testing-setup"
-        }
-      [32m+[0m[0m writer                                = (known after apply)
-    }
-
-[1m  # module.data-layer.aws_rds_cluster_instance.writer[0m will be created
-[0m  [32m+[0m[0m resource "aws_rds_cluster_instance" "writer" {
-      [32m+[0m[0m apply_immediately                     = (known after apply)
-      [32m+[0m[0m arn                                   = (known after apply)
-      [32m+[0m[0m auto_minor_version_upgrade            = true
-      [32m+[0m[0m availability_zone                     = "ap-southeast-1a"
-      [32m+[0m[0m ca_cert_identifier                    = (known after apply)
-      [32m+[0m[0m cluster_identifier                    = (known after apply)
-      [32m+[0m[0m copy_tags_to_snapshot                 = false
-      [32m+[0m[0m db_parameter_group_name               = (known after apply)
-      [32m+[0m[0m db_subnet_group_name                  = (known after apply)
-      [32m+[0m[0m dbi_resource_id                       = (known after apply)
-      [32m+[0m[0m endpoint                              = (known after apply)
-      [32m+[0m[0m engine                                = "aurora-postgresql"
-      [32m+[0m[0m engine_version                        = "15.4"
-      [32m+[0m[0m engine_version_actual                 = (known after apply)
-      [32m+[0m[0m force_destroy                         = false
-      [32m+[0m[0m id                                    = (known after apply)
-      [32m+[0m[0m identifier                            = "itsa-testing-setup-dev-aurora-writer"
-      [32m+[0m[0m identifier_prefix                     = (known after apply)
-      [32m+[0m[0m instance_class                        = "db.t3.medium"
-      [32m+[0m[0m kms_key_id                            = (known after apply)
-      [32m+[0m[0m monitoring_interval                   = 60
-      [32m+[0m[0m monitoring_role_arn                   = (known after apply)
-      [32m+[0m[0m network_type                          = (known after apply)
-      [32m+[0m[0m performance_insights_enabled          = true
-      [32m+[0m[0m performance_insights_kms_key_id       = (known after apply)
-      [32m+[0m[0m performance_insights_retention_period = (known after apply)
-      [32m+[0m[0m port                                  = (known after apply)
-      [32m+[0m[0m preferred_backup_window               = (known after apply)
-      [32m+[0m[0m preferred_maintenance_window          = (known after apply)
-      [32m+[0m[0m promotion_tier                        = 0
-      [32m+[0m[0m publicly_accessible                   = (known after apply)
-      [32m+[0m[0m storage_encrypted                     = (known after apply)
-      [32m+[0m[0m tags                                  = {
-          [32m+[0m[0m "Component" = "rds"
-          [32m+[0m[0m "Name"      = "itsa-testing-setup-dev-aurora-writer"
-        }
-      [32m+[0m[0m tags_all                              = {
-          [32m+[0m[0m "Component"   = "rds"
-          [32m+[0m[0m "CostCenter"  = "CS301"
-          [32m+[0m[0m "CreatedDate" = "2026-02-21"
-          [32m+[0m[0m "Environment" = "dev"
-          [32m+[0m[0m "ManagedBy"   = "Terraform"
-          [32m+[0m[0m "Name"        = "itsa-testing-setup-dev-aurora-writer"
-          [32m+[0m[0m "Project"     = "itsa-testing-setup"
-        }
-      [32m+[0m[0m writer                                = (known after apply)
-    }
-
 [1m  # module.data-layer.aws_rds_cluster_parameter_group.main[0m will be created
 [0m  [32m+[0m[0m resource "aws_rds_cluster_parameter_group" "main" {
       [32m+[0m[0m arn         = (known after apply)
-      [32m+[0m[0m description = "Custom Aurora PostgreSQL 15 parameters — enforces TLS (rds.force_ssl=1)"
+      [32m+[0m[0m description = "Custom Aurora PostgreSQL 15 parameters  -  enforces TLS (rds.force_ssl=1)"
       [32m+[0m[0m family      = "aurora-postgresql15"
       [32m+[0m[0m id          = (known after apply)
       [32m+[0m[0m name        = "itsa-testing-setup-dev-aurora-pg15-params"
@@ -2587,11 +2435,9 @@ Terraform will perform the following actions:
       [32m+[0m[0m include_global_service_events = true
       [32m+[0m[0m is_multi_region_trail         = true
       [32m+[0m[0m is_organization_trail         = false
-      [32m+[0m[0m kms_key_id                    = (known after apply)
       [32m+[0m[0m name                          = "itsa-testing-setup-dev-cloudtrail"
       [32m+[0m[0m s3_bucket_name                = (known after apply)
       [32m+[0m[0m sns_topic_arn                 = (known after apply)
-      [32m+[0m[0m sns_topic_name                = "itsa-testing-setup-dev-topic-alarms"
       [32m+[0m[0m tags                          = {
           [32m+[0m[0m "Component" = "cloudtrail"
           [32m+[0m[0m "Name"      = "itsa-testing-setup-dev-cloudtrail"
@@ -2661,7 +2507,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "ALB returned > 10 HTTP 5XX errors in 60 seconds — check target group health and ECS task logs"
+      [32m+[0m[0m alarm_description                     = "ALB returned > 10 HTTP 5XX errors in 60 seconds  -  check target group health and ECS task logs"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-alb-5xx-errors"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -2695,7 +2541,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "ALB has >= 1 unhealthy target for 2 consecutive minutes — check ECS task health check configuration"
+      [32m+[0m[0m alarm_description                     = "ALB has >= 1 unhealthy target for 2 consecutive minutes  -  check ECS task health check configuration"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-alb-unhealthy-hosts"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -2729,7 +2575,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "cache_cpu_high" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Account Redis EngineCPUUtilization > 80% for 2 minutes — cache may be overwhelmed; investigate hot keys"
+      [32m+[0m[0m alarm_description                     = "Account Redis EngineCPUUtilization > 80% for 2 minutes  -  cache may be overwhelmed; investigate hot keys"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-cache-cpu-high"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -2763,7 +2609,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-accounts — indicates AWS infrastructure issue"
+      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-accounts  -  indicates AWS infrastructure issue"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ddb-system-errors-itsa-testing-setup-dev-table-accounts"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -2799,7 +2645,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-logs — indicates AWS infrastructure issue"
+      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-logs  -  indicates AWS infrastructure issue"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ddb-system-errors-itsa-testing-setup-dev-table-logs"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -2835,7 +2681,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-transactions — indicates AWS infrastructure issue"
+      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-transactions  -  indicates AWS infrastructure issue"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ddb-system-errors-itsa-testing-setup-dev-table-transactions"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -2871,7 +2717,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ddb_system_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-users — indicates AWS infrastructure issue"
+      [32m+[0m[0m alarm_description                     = "DynamoDB SystemErrors detected on itsa-testing-setup-dev-table-users  -  indicates AWS infrastructure issue"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ddb-system-errors-itsa-testing-setup-dev-table-users"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -2907,7 +2753,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ecs_account_cpu_high" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Account Service primary task CPU utilization > 80% for 2 minutes — investigate load or trigger scale-out"
+      [32m+[0m[0m alarm_description                     = "Account Service primary task CPU utilization > 80% for 2 minutes  -  investigate load or trigger scale-out"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ecs-account-cpu-high"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -2944,7 +2790,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "ecs_client_cpu_high" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Client Service primary task CPU utilization > 80% for 2 minutes — investigate load or trigger scale-out"
+      [32m+[0m[0m alarm_description                     = "Client Service primary task CPU utilization > 80% for 2 minutes  -  investigate load or trigger scale-out"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-ecs-client-cpu-high"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -2981,7 +2827,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_anomaly_duration" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Anomaly Detection Lambda p99 duration > 25000ms for 2 minutes — approaching 30s timeout; investigate DynamoDB or SQS latency"
+      [32m+[0m[0m alarm_description                     = "Anomaly Detection Lambda p99 duration > 25000ms for 2 minutes  -  approaching 30s timeout; investigate DynamoDB or SQS latency"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-lambda-anomaly-duration"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -3017,7 +2863,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_anomaly_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Anomaly Detection Lambda errors >= 1 — fraud scoring pipeline is failing; transactions may not be scored"
+      [32m+[0m[0m alarm_description                     = "Anomaly Detection Lambda errors >= 1  -  fraud scoring pipeline is failing; transactions may not be scored"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-lambda-anomaly-errors"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -3053,7 +2899,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_logging_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Logging Lambda errors >= 5 — audit log pipeline is failing; check DynamoDB Logs table capacity and SQS queue depth"
+      [32m+[0m[0m alarm_description                     = "Logging Lambda errors >= 5  -  audit log pipeline is failing; check DynamoDB Logs table capacity and SQS queue depth"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-lambda-logging-errors"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -3089,7 +2935,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_notification_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Notification Lambda errors >= 1 — fraud alert email not dispatched; check SES + DynamoDB connectivity"
+      [32m+[0m[0m alarm_description                     = "Notification Lambda errors >= 1  -  fraud alert email not dispatched; check SES + DynamoDB connectivity"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-lambda-notification-errors"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -3125,7 +2971,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "lambda_verification_errors" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Verification Lambda errors >= 1 — client verification flow is failing; check SES + S3 + Cognito connectivity"
+      [32m+[0m[0m alarm_description                     = "Verification Lambda errors >= 1  -  client verification flow is failing; check SES + S3 + Cognito connectivity"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-lambda-verification-errors"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -3161,13 +3007,10 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Aurora cluster database connections > 80 for 2 minutes — investigate connection pooling or connection leaks"
+      [32m+[0m[0m alarm_description                     = "Aurora cluster database connections > 80 for 2 minutes  -  investigate connection pooling or connection leaks"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-rds-connections-high"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
-      [32m+[0m[0m dimensions                            = {
-          [32m+[0m[0m "DBClusterIdentifier" = "itsa-testing-setup-dev-aurora"
-        }
       [32m+[0m[0m evaluate_low_sample_count_percentiles = (known after apply)
       [32m+[0m[0m evaluation_periods                    = 2
       [32m+[0m[0m id                                    = (known after apply)
@@ -3197,13 +3040,10 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Aurora cluster CPU utilization > 80% for 3 minutes — investigate slow queries or connection storms"
+      [32m+[0m[0m alarm_description                     = "Aurora cluster CPU utilization > 80% for 3 minutes  -  investigate slow queries or connection storms"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-rds-cpu-high"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
-      [32m+[0m[0m dimensions                            = {
-          [32m+[0m[0m "DBClusterIdentifier" = "itsa-testing-setup-dev-aurora"
-        }
       [32m+[0m[0m evaluate_low_sample_count_percentiles = (known after apply)
       [32m+[0m[0m evaluation_periods                    = 3
       [32m+[0m[0m id                                    = (known after apply)
@@ -3233,7 +3073,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "sqs_fraud_dlq" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Fraud Notification DLQ received >= 1 message — a fraud alert failed all 3 processing attempts; manual intervention required"
+      [32m+[0m[0m alarm_description                     = "Fraud Notification DLQ received >= 1 message  -  a fraud alert failed all 3 processing attempts; manual intervention required"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-sqs-fraud-dlq"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanOrEqualToThreshold"
@@ -3269,7 +3109,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_cloudwatch_metric_alarm" "sqs_fraud_queue_depth" {
       [32m+[0m[0m actions_enabled                       = true
       [32m+[0m[0m alarm_actions                         = (known after apply)
-      [32m+[0m[0m alarm_description                     = "Fraud Notification queue depth > 100 — Notification Lambda is not draining fraud alerts fast enough"
+      [32m+[0m[0m alarm_description                     = "Fraud Notification queue depth > 100  -  Notification Lambda is not draining fraud alerts fast enough"
       [32m+[0m[0m alarm_name                            = "itsa-testing-setup-dev-sqs-fraud-queue-depth"
       [32m+[0m[0m arn                                   = (known after apply)
       [32m+[0m[0m comparison_operator                   = "GreaterThanThreshold"
@@ -3570,6 +3410,14 @@ Terraform will perform the following actions:
           [32m+[0m[0m "Project"     = "itsa-testing-setup"
         }
       [32m+[0m[0m tracing_config              = (known after apply)
+    }
+
+[1m  # module.monitoring.aws_sns_topic_policy.cloudtrail_publish[0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic_policy" "cloudtrail_publish" {
+      [32m+[0m[0m arn    = (known after apply)
+      [32m+[0m[0m id     = (known after apply)
+      [32m+[0m[0m owner  = (known after apply)
+      [32m+[0m[0m policy = (known after apply)
     }
 
 [1m  # module.security.data.aws_iam_policy_document.ecs_task_policy_account[0m will be read during apply
@@ -4364,7 +4212,7 @@ Terraform will perform the following actions:
 [0m  [32m+[0m[0m resource "aws_iam_policy" "lambda_policy_user" {
       [32m+[0m[0m arn              = (known after apply)
       [32m+[0m[0m attachment_count = (known after apply)
-      [32m+[0m[0m description      = "Permissions for User Lambda: Cognito Admin API (user lifecycle), User DynamoDB (CRM metadata). No DeleteItem — soft-delete only."
+      [32m+[0m[0m description      = "Permissions for User Lambda: Cognito Admin API (user lifecycle), User DynamoDB (CRM metadata). No DeleteItem  -  soft-delete only."
       [32m+[0m[0m id               = (known after apply)
       [32m+[0m[0m name             = "itsa-testing-setup-dev-policy-lambda-user"
       [32m+[0m[0m name_prefix      = (known after apply)
@@ -4418,7 +4266,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "ECS task execution role for Account Service — ECR image pull, Secrets Manager secret injection, CloudWatch log stream creation"
+      [32m+[0m[0m description           = "ECS task execution role for Account Service  -  ECR image pull, Secrets Manager secret injection, CloudWatch log stream creation"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4456,7 +4304,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "ECS task execution role for Client Service — ECR image pull, Secrets Manager secret injection (RDS password, Redis auth token), CloudWatch log stream creation"
+      [32m+[0m[0m description           = "ECS task execution role for Client Service  -  ECR image pull, Secrets Manager secret injection (RDS password, Redis auth token), CloudWatch log stream creation"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4494,7 +4342,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Runtime role for Account Service container — Accounts DynamoDB CRUD, Transactions DynamoDB read/update (agent review dashboard), SQS logging"
+      [32m+[0m[0m description           = "Runtime role for Account Service container  -  Accounts DynamoDB CRUD, Transactions DynamoDB read/update (agent review dashboard), SQS logging"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4532,7 +4380,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Runtime role for Client Service container — SQS logging only. RDS credentials injected at startup via execution role; no IAM auth for RDS."
+      [32m+[0m[0m description           = "Runtime role for Client Service container  -  SQS logging only. RDS credentials injected at startup via execution role; no IAM auth for RDS."
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4570,7 +4418,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for Anomaly Detection Lambda — Transactions DynamoDB (read baseline + write result), SQS Fraud Notification queue producer"
+      [32m+[0m[0m description           = "Execution role for Anomaly Detection Lambda  -  Transactions DynamoDB (read baseline + write result), SQS Fraud Notification queue producer"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4608,7 +4456,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for Logging Lambda — SQS Logging queue consumer, DynamoDB Logs table writer"
+      [32m+[0m[0m description           = "Execution role for Logging Lambda  -  SQS Logging queue consumer, DynamoDB Logs table writer"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4646,7 +4494,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for Notification Lambda — SQS Fraud Notification queue consumer, SES fraud alert email to agent"
+      [32m+[0m[0m description           = "Execution role for Notification Lambda  -  SQS Fraud Notification queue consumer, SES fraud alert email to agent"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4684,7 +4532,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for SFTP Fetch Lambda — Transfer Family endpoint resolution, Secrets Manager SSH key, EventBridge publish"
+      [32m+[0m[0m description           = "Execution role for SFTP Fetch Lambda  -  Transfer Family endpoint resolution, Secrets Manager SSH key, EventBridge publish"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4722,7 +4570,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for User Lambda — Cognito Admin API for user lifecycle, User DynamoDB for CRM metadata"
+      [32m+[0m[0m description           = "Execution role for User Lambda  -  Cognito Admin API for user lifecycle, User DynamoDB for CRM metadata"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -4760,7 +4608,7 @@ Terraform will perform the following actions:
             }
         )
       [32m+[0m[0m create_date           = (known after apply)
-      [32m+[0m[0m description           = "Execution role for Verification Lambda — SES email, S3 document storage, Cognito user attribute update"
+      [32m+[0m[0m description           = "Execution role for Verification Lambda  -  SES email, S3 document storage, Cognito user attribute update"
       [32m+[0m[0m force_detach_policies = false
       [32m+[0m[0m id                    = (known after apply)
       [32m+[0m[0m managed_policy_arns   = (known after apply)
@@ -5500,7 +5348,7 @@ Terraform will perform the following actions:
 [1m  # module.security.aws_security_group.rds_primary[0m will be created
 [0m  [32m+[0m[0m resource "aws_security_group" "rds_primary" {
       [32m+[0m[0m arn                    = (known after apply)
-      [32m+[0m[0m description            = "RDS Aurora writer and reader (single SG — failover safe): PostgreSQL from Client Service only; no egress"
+      [32m+[0m[0m description            = "RDS Aurora writer and reader (single SG  -  failover safe): PostgreSQL from Client Service only; no egress"
       [32m+[0m[0m egress                 = (known after apply)
       [32m+[0m[0m id                     = (known after apply)
       [32m+[0m[0m ingress                = (known after apply)
@@ -5609,12 +5457,12 @@ Terraform will perform the following actions:
 
 [1m  # module.security.aws_security_group_rule.alb_ingress_http_cloudfront[0m will be created
 [0m  [32m+[0m[0m resource "aws_security_group_rule" "alb_ingress_http_cloudfront" {
-      [32m+[0m[0m description              = "HTTP from CloudFront edge nodes - retained for redirect responses when HTTPS is configured"
+      [32m+[0m[0m cidr_blocks              = [
+          [32m+[0m[0m "0.0.0.0/0",
+        ]
+      [32m+[0m[0m description              = "HTTP from any - redirect to HTTPS only, no sensitive data on port 80"
       [32m+[0m[0m from_port                = 80
       [32m+[0m[0m id                       = (known after apply)
-      [32m+[0m[0m prefix_list_ids          = [
-          [32m+[0m[0m "pl-31a34658",
-        ]
       [32m+[0m[0m protocol                 = "tcp"
       [32m+[0m[0m security_group_id        = (known after apply)
       [32m+[0m[0m security_group_rule_id   = (known after apply)
@@ -6612,7 +6460,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 10
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -6663,7 +6511,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 5
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -6689,7 +6537,6 @@ Terraform will perform the following actions:
 
       [32m+[0m[0m environment {
           [32m+[0m[0m variables = {
-              [32m+[0m[0m "AWS_REGION"          = "ap-southeast-1"
               [32m+[0m[0m "DYNAMODB_TABLE_LOGS" = "itsa-testing-setup-dev-table-logs"
               [32m+[0m[0m "ENVIRONMENT"         = "dev"
             }
@@ -6718,7 +6565,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 5
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -6744,7 +6591,6 @@ Terraform will perform the following actions:
 
       [32m+[0m[0m environment {
           [32m+[0m[0m variables = {
-              [32m+[0m[0m "AWS_REGION"              = "ap-southeast-1"
               [32m+[0m[0m "DYNAMODB_TABLE_ACCOUNTS" = "itsa-testing-setup-dev-table-accounts"
               [32m+[0m[0m "DYNAMODB_TABLE_USERS"    = "itsa-testing-setup-dev-table-users"
               [32m+[0m[0m "ENVIRONMENT"             = "dev"
@@ -6775,7 +6621,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 1
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -6826,7 +6672,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 10
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -6877,7 +6723,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m publish                        = true
       [32m+[0m[0m qualified_arn                  = (known after apply)
       [32m+[0m[0m qualified_invoke_arn           = (known after apply)
-      [32m+[0m[0m reserved_concurrent_executions = 10
+      [32m+[0m[0m reserved_concurrent_executions = -1
       [32m+[0m[0m role                           = (known after apply)
       [32m+[0m[0m runtime                        = "python3.12"
       [32m+[0m[0m signing_job_arn                = (known after apply)
@@ -8080,7 +7926,7 @@ Terraform will perform the following actions:
       [32m+[0m[0m subnet_configuration (known after apply)
     }
 
-[1mPlan:[0m [0m278 to add, 0 to change, 0 to destroy.
+[1mPlan:[0m [0m276 to add, 0 to change, 0 to destroy.
 
 Changes to Outputs:
   [32m+[0m[0m alb_arn                                      = (known after apply)
@@ -8131,10 +7977,6 @@ Changes to Outputs:
   [32m+[0m[0m lambda_sftp_fetch_arn                        = (known after apply)
   [32m+[0m[0m lambda_user_arn                              = (known after apply)
   [32m+[0m[0m lambda_verification_arn                      = (known after apply)
-  [32m+[0m[0m rds_cluster_database_name                    = "crmdb"
-  [32m+[0m[0m rds_cluster_endpoint                         = (known after apply)
-  [32m+[0m[0m rds_cluster_port                             = (known after apply)
-  [32m+[0m[0m rds_cluster_reader_endpoint                  = (known after apply)
   [32m+[0m[0m s3_bucket_documents_arn                      = (known after apply)
   [32m+[0m[0m s3_bucket_documents_name                     = (known after apply)
   [32m+[0m[0m s3_bucket_frontend_arn                       = (known after apply)
@@ -8167,3 +8009,8 @@ Changes to Outputs:
   [32m+[0m[0m vpce_s3_id                                   = (known after apply)
   [32m+[0m[0m vpce_secretsmanager_id                       = (known after apply)
   [32m+[0m[0m waf_web_acl_arn                              = (known after apply)
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

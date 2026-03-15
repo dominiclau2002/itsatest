@@ -257,3 +257,37 @@ variable "alarm_email" {
   default     = ""
 }
 
+# =============================================================================
+# Multi-Environment Variables
+# =============================================================================
+
+variable "cost_center" {
+  description = "Cost center tag for billing allocation"
+  type        = string
+  default     = "CS301"
+}
+
+variable "created_date" {
+  description = "Project creation date tag (YYYY-MM-DD)"
+  type        = string
+  default     = "2026-02-21"
+}
+
+variable "dynamodb_deletion_protection" {
+  description = "Enable deletion protection on all DynamoDB tables. Set true for prod."
+  type        = bool
+  default     = true
+}
+
+variable "ecs_min_capacity" {
+  description = "Minimum ECS service count for auto-scaling (per service)"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_max_capacity" {
+  description = "Maximum ECS service count for auto-scaling (per service)"
+  type        = number
+  default     = 3
+}
+

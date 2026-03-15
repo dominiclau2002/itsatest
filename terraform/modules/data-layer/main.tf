@@ -212,7 +212,7 @@ resource "aws_dynamodb_table" "accounts" {
     enabled = true
   }
 
-  deletion_protection_enabled = false
+  deletion_protection_enabled = var.dynamodb_deletion_protection
 
   attribute {
     name = "account_id"
@@ -253,7 +253,7 @@ resource "aws_dynamodb_table" "logs" {
     enabled = true
   }
 
-  deletion_protection_enabled = false
+  deletion_protection_enabled = var.dynamodb_deletion_protection
 
   attribute {
     name = "log_id"
@@ -304,7 +304,7 @@ resource "aws_dynamodb_table" "users" {
     enabled = true
   }
 
-  deletion_protection_enabled = false
+  deletion_protection_enabled = var.dynamodb_deletion_protection
 
   attribute {
     name = "user_id"
@@ -345,7 +345,7 @@ resource "aws_dynamodb_table" "transactions" {
     enabled = true
   }
 
-  deletion_protection_enabled = false
+  deletion_protection_enabled = var.dynamodb_deletion_protection
 
   attribute {
     name = "transaction_id"

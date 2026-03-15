@@ -728,22 +728,22 @@ resource "aws_ecs_task_definition" "client" {
 
       environment = concat(
         [
-          { name = "ENVIRONMENT",           value = var.environment },
-          { name = "AWS_REGION",            value = var.aws_region },
-          { name = "APP_PORT",              value = tostring(var.app_port) },
-          { name = "COGNITO_USER_POOL_ID",  value = var.cognito_user_pool_id },
-          { name = "REDIS_ENDPOINT",        value = var.elasticache_client_endpoint },
-          { name = "REDIS_PORT",            value = tostring(var.elasticache_client_port) },
-          { name = "REDIS_TLS_ENABLED",     value = "true" },
+          { name = "ENVIRONMENT", value = var.environment },
+          { name = "AWS_REGION", value = var.aws_region },
+          { name = "APP_PORT", value = tostring(var.app_port) },
+          { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
+          { name = "REDIS_ENDPOINT", value = var.elasticache_client_endpoint },
+          { name = "REDIS_PORT", value = tostring(var.elasticache_client_port) },
+          { name = "REDIS_TLS_ENABLED", value = "true" },
           # SQS Logging queue URL from serverless module (Phase 8)
           { name = "SQS_QUEUE_LOGGING_URL", value = var.sqs_queue_logging_url },
         ],
         # Only inject RDS env vars when cluster exists (null when create_rds_cluster = false)
         var.rds_cluster_endpoint != null ? [
-          { name = "RDS_ENDPOINT",      value = var.rds_cluster_endpoint },
-          { name = "RDS_PORT",          value = tostring(var.rds_cluster_port) },
+          { name = "RDS_ENDPOINT", value = var.rds_cluster_endpoint },
+          { name = "RDS_PORT", value = tostring(var.rds_cluster_port) },
           { name = "RDS_DATABASE_NAME", value = var.rds_database_name },
-          { name = "RDS_USERNAME",      value = var.rds_master_username },
+          { name = "RDS_USERNAME", value = var.rds_master_username },
         ] : []
       )
 

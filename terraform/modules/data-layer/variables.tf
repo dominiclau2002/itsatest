@@ -98,3 +98,8 @@ variable "elasticache_snapshot_retention_days" {
   description = "Number of days to retain automatic ElastiCache Redis snapshots"
   type        = number
 }
+
+variable "dynamodb_deletion_protection" {
+  description = "Enable deletion protection on all DynamoDB tables"
+  type        = bool
+}
