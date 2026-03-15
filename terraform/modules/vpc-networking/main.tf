@@ -5,7 +5,7 @@
 # and VPC endpoints (Secrets Manager, ECR DKR, ECR API, S3 Gateway).
 #
 # Security groups for VPC endpoints are managed in the security module.
-# Interface endpoints are created WITHOUT security_group_ids here — the
+# Interface endpoints are created WITHOUT security_group_ids here  -  the
 # security module attaches SGs via aws_vpc_endpoint_security_group_association
 # to break the circular dependency between vpc-networking and security modules.
 # =============================================================================

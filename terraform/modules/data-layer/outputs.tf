@@ -3,23 +3,23 @@
 # =============================================================================
 
 output "rds_cluster_endpoint" {
-  description = "Aurora cluster writer endpoint"
-  value       = aws_rds_cluster.primary.endpoint
+  description = "Aurora cluster writer endpoint (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].endpoint : null
 }
 
 output "rds_cluster_reader_endpoint" {
-  description = "Aurora cluster reader endpoint"
-  value       = aws_rds_cluster.primary.reader_endpoint
+  description = "Aurora cluster reader endpoint (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].reader_endpoint : null
 }
 
 output "rds_cluster_port" {
-  description = "Aurora cluster port (PostgreSQL 5432)"
-  value       = aws_rds_cluster.primary.port
+  description = "Aurora cluster port (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].port : null
 }
 
 output "rds_cluster_database_name" {
-  description = "Name of the initial database created on the Aurora cluster"
-  value       = aws_rds_cluster.primary.database_name
+  description = "Name of the initial database (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].database_name : null
 }
 
 # =============================================================================
@@ -85,17 +85,17 @@ output "elasticache_client_port" {
 # =============================================================================
 
 output "secret_rds_master_password_arn" {
-  description = "Secrets Manager ARN for RDS master password — injected into Client Service ECS task"
+  description = "Secrets Manager ARN for RDS master password  -  injected into Client Service ECS task"
   value       = aws_secretsmanager_secret.rds_master_password.arn
 }
 
 output "secret_redis_account_auth_arn" {
-  description = "Secrets Manager ARN for Account Redis AUTH token — injected into Account Service ECS task"
+  description = "Secrets Manager ARN for Account Redis AUTH token  -  injected into Account Service ECS task"
   value       = aws_secretsmanager_secret.redis_account_auth.arn
 }
 
 output "secret_redis_client_auth_arn" {
-  description = "Secrets Manager ARN for Client Redis AUTH token — injected into Client Service ECS task"
+  description = "Secrets Manager ARN for Client Redis AUTH token  -  injected into Client Service ECS task"
   value       = aws_secretsmanager_secret.redis_client_auth.arn
 }
 
@@ -104,26 +104,26 @@ output "secret_redis_client_auth_arn" {
 # =============================================================================
 
 output "rds_cluster_master_username" {
-  description = "Aurora master username — single source of truth for ECS task definition env var"
-  value       = aws_rds_cluster.primary.master_username
+  description = "Aurora master username (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].master_username : null
 }
 
 output "dynamodb_table_logs_arn" {
-  description = "DynamoDB Logs table ARN — exported for reference; security module constructs ARN locally via naming convention to avoid circular dependency"
+  description = "DynamoDB Logs table ARN  -  exported for reference; security module constructs ARN locally via naming convention to avoid circular dependency"
   value       = aws_dynamodb_table.logs.arn
 }
 
 
 # =============================================================================
-# Phase 10 — Monitoring Module Inputs
+# Phase 10  -  Monitoring Module Inputs
 # =============================================================================
 
 output "rds_cluster_identifier" {
-  description = "Aurora cluster identifier — used as CloudWatch alarm DBClusterIdentifier dimension"
-  value       = aws_rds_cluster.primary.cluster_identifier
+  description = "Aurora cluster identifier - used as CloudWatch alarm DBClusterIdentifier dimension (null when create_rds_cluster = false)"
+  value       = length(aws_rds_cluster.primary) > 0 ? aws_rds_cluster.primary[0].cluster_identifier : null
 }
 
 output "elasticache_account_cluster_id" {
-  description = "ElastiCache Account replication group ID — used as CloudWatch alarm ReplicationGroupId dimension"
+  description = "ElastiCache Account replication group ID  -  used as CloudWatch alarm ReplicationGroupId dimension"
   value       = aws_elasticache_replication_group.account.id
 }

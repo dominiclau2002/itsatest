@@ -1,6 +1,6 @@
 locals {
   # =============================================================================
-  # Resource Naming Conventions — Phase 4
+  # Resource Naming Conventions  -  Phase 4
   # Locks in names for all resources created in Phases 5–9.
   # These locals are used in IAM policy ARN construction so the naming contract
   # is established before any data or compute resources exist.

@@ -1,8 +1,8 @@
 # =============================================================================
-# Monitoring Module — Input Variables
+# Monitoring Module  -  Input Variables
 #
 # All values received from the root module. No defaults for infrastructure
-# identifiers — they must always be explicitly supplied.
+# identifiers  -  they must always be explicitly supplied.
 # Defaults provided only for tunable operational parameters.
 # =============================================================================
 
@@ -42,17 +42,17 @@ variable "vpc_id" {
 # =============================================================================
 
 variable "ecs_cluster_name" {
-  description = "ECS cluster name — CloudWatch alarm ClusterName dimension"
+  description = "ECS cluster name  -  CloudWatch alarm ClusterName dimension"
   type        = string
 }
 
 variable "ecs_account_service_name" {
-  description = "ECS Account Service primary service name — CloudWatch alarm ServiceName dimension"
+  description = "ECS Account Service primary service name  -  CloudWatch alarm ServiceName dimension"
   type        = string
 }
 
 variable "ecs_client_service_name" {
-  description = "ECS Client Service primary service name — CloudWatch alarm ServiceName dimension"
+  description = "ECS Client Service primary service name  -  CloudWatch alarm ServiceName dimension"
   type        = string
 }
 
@@ -62,7 +62,7 @@ variable "ecs_client_service_name" {
 # =============================================================================
 
 variable "alb_arn_suffix" {
-  description = "ALB ARN suffix (e.g. app/name/abc123) — CloudWatch metric dimension; NOT the full ARN"
+  description = "ALB ARN suffix (e.g. app/name/abc123)  -  CloudWatch metric dimension; NOT the full ARN"
   type        = string
 }
 
@@ -72,7 +72,7 @@ variable "alb_arn_suffix" {
 # =============================================================================
 
 variable "rds_cluster_identifier" {
-  description = "Aurora cluster identifier — CloudWatch alarm DBClusterIdentifier dimension"
+  description = "Aurora cluster identifier  -  CloudWatch alarm DBClusterIdentifier dimension"
   type        = string
 }
 
@@ -92,7 +92,7 @@ variable "dynamodb_table_names" {
 # =============================================================================
 
 variable "elasticache_account_cluster_id" {
-  description = "ElastiCache Account replication group ID — CloudWatch alarm ReplicationGroupId dimension"
+  description = "ElastiCache Account replication group ID  -  CloudWatch alarm ReplicationGroupId dimension"
   type        = string
 }
 
@@ -102,12 +102,12 @@ variable "elasticache_account_cluster_id" {
 # =============================================================================
 
 variable "sqs_fraud_queue_name" {
-  description = "Fraud Notification SQS queue name — CloudWatch alarm QueueName dimension"
+  description = "Fraud Notification SQS queue name  -  CloudWatch alarm QueueName dimension"
   type        = string
 }
 
 variable "sqs_fraud_dlq_name" {
-  description = "Fraud Notification SQS dead-letter queue name — CloudWatch alarm QueueName dimension"
+  description = "Fraud Notification SQS dead-letter queue name  -  CloudWatch alarm QueueName dimension"
   type        = string
 }
 
@@ -117,22 +117,22 @@ variable "sqs_fraud_dlq_name" {
 # =============================================================================
 
 variable "lambda_verification_name" {
-  description = "Verification Lambda function name — CloudWatch alarm FunctionName dimension"
+  description = "Verification Lambda function name  -  CloudWatch alarm FunctionName dimension"
   type        = string
 }
 
 variable "lambda_anomaly_detection_name" {
-  description = "Anomaly Detection Lambda function name — CloudWatch alarm FunctionName dimension"
+  description = "Anomaly Detection Lambda function name  -  CloudWatch alarm FunctionName dimension"
   type        = string
 }
 
 variable "lambda_notification_name" {
-  description = "Notification Lambda function name — CloudWatch alarm FunctionName dimension"
+  description = "Notification Lambda function name  -  CloudWatch alarm FunctionName dimension"
   type        = string
 }
 
 variable "lambda_logging_name" {
-  description = "Logging Lambda function name — CloudWatch alarm FunctionName dimension"
+  description = "Logging Lambda function name  -  CloudWatch alarm FunctionName dimension"
   type        = string
 }
 
@@ -150,11 +150,15 @@ variable "alarm_email" {
 variable "cloudtrail_log_retention_days" {
   description = "Retention in days for the CloudTrail CloudWatch log group"
   type        = number
-  default     = 90
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
 }
 
-variable "enable_alb_access_logs" {
-  description = "Whether to create an ALB access logs S3 bucket and enable access log delivery"
-  type        = bool
-  default     = false
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key  -  encrypts CloudTrail and VPC Flow Log groups (CKV_AWS_158) and the SNS alarms topic (CKV_AWS_26)"
+  type        = string
+}
+
+variable "kms_s3_arn" {
+  description = "ARN of the S3 KMS key  -  used to encrypt CloudTrail S3 log files (CKV_AWS_35)"
+  type        = string
 }

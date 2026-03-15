@@ -14,7 +14,7 @@
 # Module-Level Locals
 #
 # Recomputed from project_name + environment (same formulas as root locals.tf).
-# Modules do not inherit root locals — must be defined locally.
+# Modules do not inherit root locals  -  must be defined locally.
 # =============================================================================
 
 locals {
@@ -30,7 +30,7 @@ locals {
 # =============================================================================
 # ECR Repositories
 #
-# One repository per service. Images are immutable — once a tag is pushed it
+# One repository per service. Images are immutable  -  once a tag is pushed it
 # cannot be overwritten, preventing accidental rollback-via-retag. Lifecycle
 # policy trims untagged layers to bound storage costs.
 # =============================================================================
@@ -45,7 +45,10 @@ resource "aws_ecr_repository" "account_service" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256" # AWS-managed encryption; no custom KMS key for ECR (cost/complexity trade-off)
+    # KMS encryption using the shared S3 CMK  -  ECR stores image layers as S3 objects under the hood;
+    # reusing the S3 KMS key avoids an extra key while satisfying CKV_AWS_136 (KMS requirement).
+    encryption_type = "KMS"
+    kms_key         = var.kms_s3_arn
   }
 
   force_delete = false # Prevent accidental repo deletion when images exist
@@ -66,7 +69,8 @@ resource "aws_ecr_repository" "client_service" {
   }
 
   encryption_configuration {
-    encryption_type = "AES256"
+    encryption_type = "KMS"
+    kms_key         = var.kms_s3_arn
   }
 
   force_delete = false
@@ -142,6 +146,7 @@ resource "aws_ecr_lifecycle_policy" "client_service" {
 resource "aws_cloudwatch_log_group" "ecs_account" {
   name              = local.log_group_ecs_account
   retention_in_days = var.ecs_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn # Encrypts log data at rest with CMK (CKV_AWS_158)
 
   tags = {
     Name      = local.log_group_ecs_account
@@ -153,6 +158,7 @@ resource "aws_cloudwatch_log_group" "ecs_account" {
 resource "aws_cloudwatch_log_group" "ecs_client" {
   name              = local.log_group_ecs_client
   retention_in_days = var.ecs_log_retention_days
+  kms_key_id        = var.kms_cloudwatch_arn
 
   tags = {
     Name      = local.log_group_ecs_client
@@ -185,7 +191,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 # Attach FARGATE capacity provider to the cluster as the sole and default provider.
-# FARGATE_SPOT deliberately excluded — spot interruptions are incompatible with
+# FARGATE_SPOT deliberately excluded  -  spot interruptions are incompatible with
 # the HA and zero-trust requirements of the CRM system.
 resource "aws_ecs_cluster_capacity_providers" "main" {
   cluster_name = aws_ecs_cluster.main.name
@@ -204,7 +210,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 #
 # Internet-facing ALB in public subnets. Receives traffic from CloudFront
 # (Phase 9) restricted via CloudFront managed prefix list on the ALB SG.
-# HTTP only for now — HTTPS listener with ACM certificate added in Phase 9.
+# HTTP only for now  -  HTTPS listener with ACM certificate added in Phase 9.
 # =============================================================================
 
 # Internet-facing ALB serving as the single ingress point for ECS services
@@ -217,6 +223,15 @@ resource "aws_lb" "main" {
 
   enable_deletion_protection = var.alb_deletion_protection # Set true in prod tfvars
 
+  # CKV_AWS_91: ALB access logs delivered to the pre-created S3 bucket in the storage module.
+  # Bucket is created in storage (not monitoring) to avoid a circular dependency:
+  # monitoring depends on compute for alarm dimensions; compute cannot depend on monitoring.
+  access_logs {
+    bucket  = var.alb_logs_bucket_name
+    prefix  = "alb"
+    enabled = true
+  }
+
   tags = {
     Name      = local.alb_name
     Component = "alb"
@@ -228,16 +243,16 @@ resource "aws_lb" "main" {
 # ALB Target Groups
 #
 # One target group per service. target_type = "ip" is required for Fargate
-# awsvpc networking — tasks register their ENI IP directly (not the host EC2 IP).
+# awsvpc networking  -  tasks register their ENI IP directly (not the host EC2 IP).
 # Names are abbreviated to stay within the 32-character AWS limit.
 # =============================================================================
 
-# Target group for Account Service tasks — all primary + secondary tasks share one TG
+# Target group for Account Service tasks  -  all primary + secondary tasks share one TG
 resource "aws_lb_target_group" "account" {
   name        = "${var.project_name}-${var.environment}-tg-acct"
   port        = var.app_port
   protocol    = "HTTP"
-  target_type = "ip" # Required for Fargate awsvpc — tasks register ENI IPs
+  target_type = "ip" # Required for Fargate awsvpc  -  tasks register ENI IPs
   vpc_id      = var.vpc_id
 
   health_check {
@@ -256,7 +271,7 @@ resource "aws_lb_target_group" "account" {
   }
 }
 
-# Target group for Client Service tasks — all primary + secondary tasks share one TG
+# Target group for Client Service tasks  -  all primary + secondary tasks share one TG
 resource "aws_lb_target_group" "client" {
   name        = "${var.project_name}-${var.environment}-tg-clnt"
   port        = var.app_port
@@ -282,7 +297,7 @@ resource "aws_lb_target_group" "client" {
 
 
 # =============================================================================
-# ALB Listener — HTTP
+# ALB Listener  -  HTTP
 #
 # HTTP:80 listener with a default 404 fixed response. All valid traffic is
 # matched by path-based rules below. HTTPS listener (port 443 with ACM cert)
@@ -290,7 +305,7 @@ resource "aws_lb_target_group" "client" {
 # Route 53 are configured. This listener will then become a redirect to HTTPS.
 # =============================================================================
 
-# HTTP listener — default action returns 404 for unmatched paths
+# HTTP listener  -  default action returns 404 for unmatched paths
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = 80
@@ -328,7 +343,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# HTTPS listener — created only when a custom domain + ACM cert are provided.
+# HTTPS listener  -  created only when a custom domain + ACM cert are provided.
 # Uses TLS 1.3-preferred policy (also supports TLS 1.2). Default action returns
 # 404 for unmatched paths; path-based rules below route to correct targets.
 resource "aws_lb_listener" "https" {
@@ -356,14 +371,14 @@ resource "aws_lb_listener" "https" {
 
 
 # =============================================================================
-# ALB Listener Rules — Path-Based Routing
+# ALB Listener Rules  -  Path-Based Routing
 #
 # Routes API traffic to the correct service target group by path prefix.
 # Priority ordering: Account (100) evaluated before Client (200).
 # Any path not matching either rule falls through to the listener default (404).
 # =============================================================================
 
-# Route /api/accounts/* traffic to Account Service — HTTP listener rule
+# Route /api/accounts/* traffic to Account Service  -  HTTP listener rule
 # (renamed from aws_lb_listener_rule.account; requires terraform state mv before apply)
 resource "aws_lb_listener_rule" "account_http" {
   listener_arn = aws_lb_listener.http.arn
@@ -386,7 +401,7 @@ resource "aws_lb_listener_rule" "account_http" {
   }
 }
 
-# Route /api/accounts/* traffic to Account Service — HTTPS listener rule (when domain configured)
+# Route /api/accounts/* traffic to Account Service  -  HTTPS listener rule (when domain configured)
 resource "aws_lb_listener_rule" "account_https" {
   count        = var.domain_name != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
@@ -409,7 +424,7 @@ resource "aws_lb_listener_rule" "account_https" {
   }
 }
 
-# Route /api/clients/*/verify to Verification Lambda — HTTP listener rule (priority 150, before /api/clients/*)
+# Route /api/clients/*/verify to Verification Lambda  -  HTTP listener rule (priority 150, before /api/clients/*)
 resource "aws_lb_listener_rule" "verification_http" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 150
@@ -431,7 +446,7 @@ resource "aws_lb_listener_rule" "verification_http" {
   }
 }
 
-# Route /api/clients/*/verify to Verification Lambda — HTTPS listener rule (when domain configured)
+# Route /api/clients/*/verify to Verification Lambda  -  HTTPS listener rule (when domain configured)
 resource "aws_lb_listener_rule" "verification_https" {
   count        = var.domain_name != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
@@ -454,7 +469,7 @@ resource "aws_lb_listener_rule" "verification_https" {
   }
 }
 
-# Route /api/clients/* traffic to Client Service — HTTP listener rule (priority 200, after verification at 150)
+# Route /api/clients/* traffic to Client Service  -  HTTP listener rule (priority 200, after verification at 150)
 # (renamed from aws_lb_listener_rule.client; requires terraform state mv before apply)
 resource "aws_lb_listener_rule" "client_http" {
   listener_arn = aws_lb_listener.http.arn
@@ -477,7 +492,7 @@ resource "aws_lb_listener_rule" "client_http" {
   }
 }
 
-# Route /api/clients/* traffic to Client Service — HTTPS listener rule (when domain configured)
+# Route /api/clients/* traffic to Client Service  -  HTTPS listener rule (when domain configured)
 resource "aws_lb_listener_rule" "client_https" {
   count        = var.domain_name != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
@@ -500,7 +515,7 @@ resource "aws_lb_listener_rule" "client_https" {
   }
 }
 
-# Route /api/users/* traffic to User Lambda — HTTP listener rule (priority 300)
+# Route /api/users/* traffic to User Lambda  -  HTTP listener rule (priority 300)
 resource "aws_lb_listener_rule" "user_http" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 300
@@ -522,7 +537,7 @@ resource "aws_lb_listener_rule" "user_http" {
   }
 }
 
-# Route /api/users/* traffic to User Lambda — HTTPS listener rule (when domain configured)
+# Route /api/users/* traffic to User Lambda  -  HTTPS listener rule (when domain configured)
 resource "aws_lb_listener_rule" "user_https" {
   count        = var.domain_name != "" ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
@@ -547,7 +562,7 @@ resource "aws_lb_listener_rule" "user_https" {
 
 
 # =============================================================================
-# ALB Lambda Target Groups — Phase 9
+# ALB Lambda Target Groups  -  Phase 9
 #
 # Lambda target groups route ALB requests directly to Lambda functions without
 # going through ECS. target_type = "lambda" means no vpc_id, port, or protocol
@@ -559,7 +574,7 @@ resource "aws_lb_listener_rule" "user_https" {
 #   user:         ${project}-${env}-tg-user (30 chars max for itsa-testing-setup-dev)
 # =============================================================================
 
-# Lambda target group for Verification Lambda — handles /api/clients/*/verify
+# Lambda target group for Verification Lambda  -  handles /api/clients/*/verify
 resource "aws_lb_target_group" "verification_lambda" {
   name        = "${var.project_name}-${var.environment}-tg-vrfy"
   target_type = "lambda" # No vpc_id/port/protocol for Lambda targets
@@ -578,7 +593,7 @@ resource "aws_lb_target_group_attachment" "verification" {
 }
 
 # Grant ALB permission to invoke Verification Lambda.
-# source_arn scopes to the specific target group ARN — prevents other ALBs or
+# source_arn scopes to the specific target group ARN  -  prevents other ALBs or
 # target groups from invoking this Lambda without explicit permission.
 resource "aws_lambda_permission" "alb_invoke_verification" {
   statement_id  = "AllowALBInvokeVerification"
@@ -588,7 +603,7 @@ resource "aws_lambda_permission" "alb_invoke_verification" {
   source_arn    = aws_lb_target_group.verification_lambda.arn
 }
 
-# Lambda target group for User Lambda — handles /api/users/*
+# Lambda target group for User Lambda  -  handles /api/users/*
 resource "aws_lb_target_group" "user_lambda" {
   name        = "${var.project_name}-${var.environment}-tg-user"
   target_type = "lambda"
@@ -619,16 +634,16 @@ resource "aws_lambda_permission" "alb_invoke_user" {
 # =============================================================================
 # ECS Task Definitions
 #
-# Fargate task definitions are immutable — each apply creates a new revision.
+# Fargate task definitions are immutable  -  each apply creates a new revision.
 # Environment variables carry non-sensitive config; Secrets Manager ARNs supply
 # sensitive values via the `secrets` block (injected at container start by the
 # ECS agent, never exposed in task definition JSON in plaintext).
 #
-# SQS_QUEUE_LOGGING_URL is a Phase 8 placeholder — left empty so containers
+# SQS_QUEUE_LOGGING_URL is a Phase 8 placeholder  -  left empty so containers
 # can start now; the application must handle an empty value gracefully.
 # =============================================================================
 
-# Account Service task definition — DynamoDB + Redis, no RDS access
+# Account Service task definition  -  DynamoDB + Redis, no RDS access
 resource "aws_ecs_task_definition" "account" {
   family                   = "${var.project_name}-${var.environment}-account-service"
   requires_compatibilities = ["FARGATE"]
@@ -688,7 +703,7 @@ resource "aws_ecs_task_definition" "account" {
   }
 }
 
-# Client Service task definition — RDS + Redis, no DynamoDB access
+# Client Service task definition  -  RDS + Redis, no DynamoDB access
 resource "aws_ecs_task_definition" "client" {
   family                   = "${var.project_name}-${var.environment}-client-service"
   requires_compatibilities = ["FARGATE"]
@@ -711,21 +726,26 @@ resource "aws_ecs_task_definition" "client" {
         }
       ]
 
-      environment = [
-        { name = "ENVIRONMENT", value = var.environment },
-        { name = "AWS_REGION", value = var.aws_region },
-        { name = "APP_PORT", value = tostring(var.app_port) },
-        { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
-        { name = "RDS_ENDPOINT", value = var.rds_cluster_endpoint },
-        { name = "RDS_PORT", value = tostring(var.rds_cluster_port) },
-        { name = "RDS_DATABASE_NAME", value = var.rds_database_name },
-        { name = "RDS_USERNAME", value = var.rds_master_username },
-        { name = "REDIS_ENDPOINT", value = var.elasticache_client_endpoint },
-        { name = "REDIS_PORT", value = tostring(var.elasticache_client_port) },
-        { name = "REDIS_TLS_ENABLED", value = "true" },
-        # SQS Logging queue URL from serverless module (Phase 8)
-        { name = "SQS_QUEUE_LOGGING_URL", value = var.sqs_queue_logging_url }
-      ]
+      environment = concat(
+        [
+          { name = "ENVIRONMENT", value = var.environment },
+          { name = "AWS_REGION", value = var.aws_region },
+          { name = "APP_PORT", value = tostring(var.app_port) },
+          { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
+          { name = "REDIS_ENDPOINT", value = var.elasticache_client_endpoint },
+          { name = "REDIS_PORT", value = tostring(var.elasticache_client_port) },
+          { name = "REDIS_TLS_ENABLED", value = "true" },
+          # SQS Logging queue URL from serverless module (Phase 8)
+          { name = "SQS_QUEUE_LOGGING_URL", value = var.sqs_queue_logging_url },
+        ],
+        # Only inject RDS env vars when cluster exists (null when create_rds_cluster = false)
+        var.rds_cluster_endpoint != null ? [
+          { name = "RDS_ENDPOINT", value = var.rds_cluster_endpoint },
+          { name = "RDS_PORT", value = tostring(var.rds_cluster_port) },
+          { name = "RDS_DATABASE_NAME", value = var.rds_database_name },
+          { name = "RDS_USERNAME", value = var.rds_master_username },
+        ] : []
+      )
 
       # RDS password and Redis AUTH token fetched from Secrets Manager at container start
       secrets = [
@@ -757,7 +777,7 @@ resource "aws_ecs_task_definition" "client" {
 # Four services: primary + secondary for each of Account and Client.
 # Primary tasks run in AZ-1a (private_app_subnet_1); secondary in AZ-1b
 # (private_app_subnet_2). Both primary and secondary register into the same
-# target group per service — the ALB distributes requests across all healthy
+# target group per service  -  the ALB distributes requests across all healthy
 # tasks regardless of AZ.
 #
 # desired_count = 1 per service instance is intentional for dev; scale up
@@ -768,7 +788,7 @@ resource "aws_ecs_task_definition" "client" {
 # service may fail to stabilize during first apply.
 # =============================================================================
 
-# Account Service — primary task in AZ-1a
+# Account Service  -  primary task in AZ-1a
 resource "aws_ecs_service" "account_primary" {
   name                 = "${var.project_name}-${var.environment}-account-primary"
   cluster              = aws_ecs_cluster.main.id
@@ -797,7 +817,7 @@ resource "aws_ecs_service" "account_primary" {
   }
 }
 
-# Account Service — secondary task in AZ-1b for HA
+# Account Service  -  secondary task in AZ-1b for HA
 resource "aws_ecs_service" "account_secondary" {
   name                 = "${var.project_name}-${var.environment}-account-secondary"
   cluster              = aws_ecs_cluster.main.id
@@ -826,7 +846,7 @@ resource "aws_ecs_service" "account_secondary" {
   }
 }
 
-# Client Service — primary task in AZ-1a
+# Client Service  -  primary task in AZ-1a
 resource "aws_ecs_service" "client_primary" {
   name                 = "${var.project_name}-${var.environment}-client-primary"
   cluster              = aws_ecs_cluster.main.id
@@ -855,7 +875,7 @@ resource "aws_ecs_service" "client_primary" {
   }
 }
 
-# Client Service — secondary task in AZ-1b for HA
+# Client Service  -  secondary task in AZ-1b for HA
 resource "aws_ecs_service" "client_secondary" {
   name                 = "${var.project_name}-${var.environment}-client-secondary"
   cluster              = aws_ecs_cluster.main.id
@@ -886,7 +906,7 @@ resource "aws_ecs_service" "client_secondary" {
 
 
 # =============================================================================
-# ECS Application Auto Scaling — Phase 10
+# ECS Application Auto Scaling  -  Phase 10
 #
 # Adds target-tracking scaling policies (CPU 60% target) to all 4 ECS services.
 # Each service scales independently between ecs_min_capacity and ecs_max_capacity.
@@ -897,7 +917,7 @@ resource "aws_ecs_service" "client_secondary" {
 # preventing flapping when load oscillates around the threshold.
 # scale_out_cooldown = 60s: scale out quickly (1 min) to absorb sudden load.
 #
-# resource_id format must be "service/<cluster-name>/<service-name>" exactly —
+# resource_id format must be "service/<cluster-name>/<service-name>" exactly  - 
 # any deviation causes silent scaling failure without a Terraform error.
 # =============================================================================
 

@@ -174,12 +174,12 @@ output "kms_key_secrets_manager_arn" {
 # =============================================================================
 
 output "rds_cluster_endpoint" {
-  description = "Aurora cluster writer endpoint — used by Client Service ECS task definition in Phase 7"
+  description = "Aurora cluster writer endpoint  -  used by Client Service ECS task definition in Phase 7"
   value       = module.data-layer.rds_cluster_endpoint
 }
 
 output "rds_cluster_reader_endpoint" {
-  description = "Aurora cluster reader endpoint — for read-only access (informational; application uses writer endpoint via ElastiCache)"
+  description = "Aurora cluster reader endpoint  -  for read-only access (informational; application uses writer endpoint via ElastiCache)"
   value       = module.data-layer.rds_cluster_reader_endpoint
 }
 
@@ -218,12 +218,12 @@ output "dynamodb_table_transactions_name" {
 }
 
 output "dynamodb_table_accounts_stream_arn" {
-  description = "DynamoDB Accounts table stream ARN (for Phase 8 event trigger — account change events)"
+  description = "DynamoDB Accounts table stream ARN (for Phase 8 event trigger  -  account change events)"
   value       = module.data-layer.dynamodb_table_accounts_stream_arn
 }
 
 output "dynamodb_table_transactions_stream_arn" {
-  description = "DynamoDB Transactions table stream ARN (for Phase 8 event trigger — transaction status change events)"
+  description = "DynamoDB Transactions table stream ARN (for Phase 8 event trigger  -  transaction status change events)"
   value       = module.data-layer.dynamodb_table_transactions_stream_arn
 }
 
@@ -270,7 +270,7 @@ output "s3_bucket_sftp_arn" {
 # =============================================================================
 
 output "cognito_user_pool_id" {
-  description = "Cognito user pool ID — used for JWKS URL construction and ECS env vars"
+  description = "Cognito user pool ID  -  used for JWKS URL construction and ECS env vars"
   value       = module.auth.cognito_user_pool_id
 }
 
@@ -314,7 +314,7 @@ output "ecs_cluster_name" {
 }
 
 output "alb_dns_name" {
-  description = "ALB DNS name — use for HTTP access until custom domain configured in Phase 9"
+  description = "ALB DNS name  -  use for HTTP access until custom domain configured in Phase 9"
   value       = module.compute.alb_dns_name
 }
 
@@ -329,7 +329,7 @@ output "alb_arn" {
 }
 
 output "alb_listener_arn" {
-  description = "HTTP listener ARN — upgrade to HTTPS in Phase 9"
+  description = "HTTP listener ARN  -  upgrade to HTTPS in Phase 9"
   value       = module.compute.alb_listener_arn
 }
 
@@ -360,7 +360,7 @@ output "target_group_client_arn" {
 # --- SQS Queue Outputs ---
 
 output "sqs_queue_logging_url" {
-  description = "SQS Logging queue URL — passed to ECS task definitions for audit event publishing"
+  description = "SQS Logging queue URL  -  passed to ECS task definitions for audit event publishing"
   value       = module.serverless.sqs_queue_logging_url
 }
 
@@ -370,7 +370,7 @@ output "sqs_queue_logging_arn" {
 }
 
 output "sqs_queue_fraud_notification_url" {
-  description = "SQS Fraud Notification queue URL — used by Anomaly Detection Lambda to enqueue fraud alerts"
+  description = "SQS Fraud Notification queue URL  -  used by Anomaly Detection Lambda to enqueue fraud alerts"
   value       = module.serverless.sqs_queue_fraud_notification_url
 }
 
@@ -380,7 +380,7 @@ output "sqs_queue_fraud_notification_arn" {
 }
 
 output "sqs_queue_fraud_notification_dlq_arn" {
-  description = "SQS Fraud Notification dead-letter queue ARN — holds unprocessable fraud alerts after 3 retries"
+  description = "SQS Fraud Notification dead-letter queue ARN  -  holds unprocessable fraud alerts after 3 retries"
   value       = module.serverless.sqs_queue_fraud_notification_dlq_arn
 }
 
@@ -435,7 +435,7 @@ output "eventbridge_transaction_review_arn" {
 # --- S3 Bucket Outputs ---
 
 output "s3_bucket_documents_name" {
-  description = "Documents S3 bucket name — injected into Verification Lambda as S3_BUCKET_DOCUMENTS"
+  description = "Documents S3 bucket name  -  injected into Verification Lambda as S3_BUCKET_DOCUMENTS"
   value       = module.storage.s3_documents_bucket_name
 }
 
@@ -445,7 +445,7 @@ output "s3_bucket_documents_arn" {
 }
 
 output "s3_bucket_frontend_id" {
-  description = "Frontend S3 bucket ID (name) — deploy compiled React SPA assets here"
+  description = "Frontend S3 bucket ID (name)  -  deploy compiled React SPA assets here"
   value       = module.storage.s3_frontend_bucket_id
 }
 
@@ -457,7 +457,7 @@ output "s3_bucket_frontend_arn" {
 # --- CloudFront Outputs ---
 
 output "cloudfront_distribution_id" {
-  description = "CloudFront distribution ID — required for cache invalidation after frontend deployments"
+  description = "CloudFront distribution ID  -  required for cache invalidation after frontend deployments"
   value       = module.cdn.cloudfront_distribution_id
 }
 
@@ -467,7 +467,7 @@ output "cloudfront_distribution_arn" {
 }
 
 output "cloudfront_domain_name" {
-  description = "CloudFront distribution domain name (e.g. d1234.cloudfront.net) — primary access URL until custom domain configured"
+  description = "CloudFront distribution domain name (e.g. d1234.cloudfront.net)  -  primary access URL until custom domain configured"
   value       = module.cdn.cloudfront_domain_name
 }
 
@@ -481,11 +481,11 @@ output "waf_web_acl_arn" {
 # =============================================================================
 
 output "cloudtrail_arn" {
-  description = "CloudTrail trail ARN — management event audit log for all AWS API calls"
+  description = "CloudTrail trail ARN  -  management event audit log for all AWS API calls"
   value       = module.monitoring.cloudtrail_arn
 }
 
 output "sns_alarms_topic_arn" {
-  description = "SNS topic ARN for CloudWatch alarm notifications — add subscriptions here for PagerDuty, Slack, etc."
+  description = "SNS topic ARN for CloudWatch alarm notifications  -  add subscriptions here for PagerDuty, Slack, etc."
   value       = module.monitoring.sns_alarms_topic_arn
 }

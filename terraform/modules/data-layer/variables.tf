@@ -58,6 +58,12 @@ variable "kms_secrets_manager_arn" {
   type        = string
 }
 
+variable "create_rds_cluster" {
+  description = "Set to false to skip Aurora cluster creation (required on free-tier AWS accounts which do not support Aurora without WithExpressConfiguration). Set true once the account is upgraded."
+  type        = bool
+  default     = true
+}
+
 variable "rds_instance_class" {
   description = "RDS Aurora instance class for writer and reader nodes"
   type        = string
@@ -91,4 +97,9 @@ variable "elasticache_node_type" {
 variable "elasticache_snapshot_retention_days" {
   description = "Number of days to retain automatic ElastiCache Redis snapshots"
   type        = number
+}
+
+variable "dynamodb_deletion_protection" {
+  description = "Enable deletion protection on all DynamoDB tables"
+  type        = bool
 }

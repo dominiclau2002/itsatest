@@ -4,6 +4,7 @@
 .terraform/
 .terraform.lock.hcl
 *.tfvars
+!environments/*/*.tfvars
 *.tfvars.json
 crash.log
 crash.*.log

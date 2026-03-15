@@ -1,8 +1,8 @@
 # =============================================================================
-# Compute Module — Input Variables
+# Compute Module  -  Input Variables
 #
 # All values received from the root module. No defaults for infrastructure
-# identifiers — they must always be explicitly supplied.
+# identifiers  -  they must always be explicitly supplied.
 # Defaults provided only for tunable operational parameters.
 # =============================================================================
 
@@ -118,7 +118,7 @@ variable "iam_role_ecs_client_task_arn" {
 
 
 # =============================================================================
-# Data Layer — RDS
+# Data Layer  -  RDS
 # =============================================================================
 
 variable "rds_cluster_endpoint" {
@@ -143,7 +143,7 @@ variable "rds_master_username" {
 
 
 # =============================================================================
-# Data Layer — DynamoDB
+# Data Layer  -  DynamoDB
 # =============================================================================
 
 variable "dynamodb_table_accounts_name" {
@@ -158,7 +158,7 @@ variable "dynamodb_table_transactions_name" {
 
 
 # =============================================================================
-# Data Layer — ElastiCache
+# Data Layer  -  ElastiCache
 # =============================================================================
 
 variable "elasticache_account_endpoint" {
@@ -213,6 +213,21 @@ variable "cognito_user_pool_id" {
 
 
 # =============================================================================
+# KMS Keys (from security module)
+# =============================================================================
+
+variable "kms_s3_arn" {
+  description = "ARN of the S3 KMS key  -  used for ECR repository encryption (ECR stores image layers as S3 objects)"
+  type        = string
+}
+
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key  -  used to encrypt ECS log groups at rest"
+  type        = string
+}
+
+
+# =============================================================================
 # Tunable Operational Parameters (defaults suitable for dev)
 # =============================================================================
 
@@ -259,16 +274,16 @@ variable "alb_deletion_protection" {
 }
 
 # =============================================================================
-# Phase 8 — SQS Queue URL
+# Phase 8  -  SQS Queue URL
 # =============================================================================
 
 variable "sqs_queue_logging_url" {
-  description = "SQS Logging queue URL — injected into ECS task definitions for audit event publishing"
+  description = "SQS Logging queue URL  -  injected into ECS task definitions for audit event publishing"
   type        = string
 }
 
 # =============================================================================
-# Phase 9 — Domain & HTTPS
+# Phase 9  -  Domain & HTTPS
 # =============================================================================
 
 variable "domain_name" {
@@ -285,22 +300,32 @@ variable "acm_cert_alb_arn" {
 
 
 # =============================================================================
-# Phase 9 — Lambda ALB Routing
+# Phase 9  -  Lambda ALB Routing
 # =============================================================================
 
 variable "lambda_verification_arn" {
-  description = "Verification Lambda function ARN — registered as ALB Lambda target group target (path /api/clients/*/verify, priority 150)"
+  description = "Verification Lambda function ARN  -  registered as ALB Lambda target group target (path /api/clients/*/verify, priority 150)"
   type        = string
 }
 
 variable "lambda_user_arn" {
-  description = "User Lambda function ARN — registered as ALB Lambda target group target (path /api/users/*, priority 300)"
+  description = "User Lambda function ARN  -  registered as ALB Lambda target group target (path /api/users/*, priority 300)"
   type        = string
 }
 
 
 # =============================================================================
-# Phase 10 — ECS Auto Scaling Bounds
+# ALB Access Logs
+# =============================================================================
+
+variable "alb_logs_bucket_name" {
+  description = "S3 bucket name for ALB access logs  -  created in storage module to avoid circular dependency with monitoring (CKV_AWS_91)"
+  type        = string
+}
+
+
+# =============================================================================
+# Phase 10  -  ECS Auto Scaling Bounds
 # =============================================================================
 
 variable "ecs_min_capacity" {

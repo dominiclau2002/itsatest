@@ -1,8 +1,8 @@
 # =============================================================================
-# Serverless Module — Input Variables
+# Serverless Module  -  Input Variables
 #
 # All values received from the root module. No defaults for infrastructure
-# identifiers — they must always be explicitly supplied.
+# identifiers  -  they must always be explicitly supplied.
 # Defaults provided only for tunable operational parameters.
 # =============================================================================
 
@@ -119,7 +119,12 @@ variable "ses_sender_email" {
 variable "lambda_log_retention_days" {
   description = "CloudWatch log retention in days for Lambda functions"
   type        = number
-  default     = 30
+  default     = 365 # CKV_AWS_338: minimum 1 year for compliance
+}
+
+variable "kms_cloudwatch_arn" {
+  description = "ARN of the CloudWatch Logs KMS key  -  used to encrypt all Lambda log groups at rest (CKV_AWS_158)"
+  type        = string
 }
 
 variable "sftp_schedule_expression" {
@@ -129,43 +134,43 @@ variable "sftp_schedule_expression" {
 }
 
 # =============================================================================
-# Phase 9 — Documents S3 Bucket
+# Phase 9  -  Documents S3 Bucket
 # =============================================================================
 
 variable "s3_documents_bucket_name" {
-  description = "Documents S3 bucket name — injected into Verification Lambda as S3_BUCKET_DOCUMENTS env var (was empty placeholder in Phase 8)"
+  description = "Documents S3 bucket name  -  injected into Verification Lambda as S3_BUCKET_DOCUMENTS env var (was empty placeholder in Phase 8)"
   type        = string
 }
 
 
 # =============================================================================
-# Phase 10 — DynamoDB Stream ARNs
+# Phase 10  -  DynamoDB Stream ARNs
 # =============================================================================
 
 variable "dynamodb_stream_transactions_arn" {
-  description = "DynamoDB Transactions table stream ARN — used by Transactions→Logging Lambda event source mapping"
+  description = "DynamoDB Transactions table stream ARN  -  used by Transactions→Logging Lambda event source mapping"
   type        = string
 }
 
 variable "dynamodb_stream_accounts_arn" {
-  description = "DynamoDB Accounts table stream ARN — used by Accounts→Anomaly Detection Lambda event source mapping"
+  description = "DynamoDB Accounts table stream ARN  -  used by Accounts→Anomaly Detection Lambda event source mapping"
   type        = string
 }
 
 
 # =============================================================================
-# Phase 10 — Lambda Reserved Concurrency
+# Phase 10  -  Lambda Reserved Concurrency
 # =============================================================================
 
 variable "lambda_reserved_concurrency" {
-  description = "Reserved concurrent execution limits per Lambda function. Setting to 0 disables the function entirely — never set sftp_fetch to 0."
+  description = "Reserved concurrent execution limits per Lambda function. Setting to 0 disables the function entirely  -  never set sftp_fetch to 0."
   type        = map(number)
   default = {
-    verification      = 10
-    logging           = 5
-    user              = 10
-    sftp_fetch        = 1
-    anomaly_detection = 10
-    notification      = 5
+    verification      = -1
+    logging           = -1
+    user              = -1
+    sftp_fetch        = -1
+    anomaly_detection = -1
+    notification      = -1
   }
 }

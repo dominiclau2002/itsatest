@@ -1,5 +1,5 @@
 # =============================================================================
-# Compute Module — Outputs
+# Compute Module  -  Outputs
 #
 # Exposes ECS cluster identifiers, ALB addressing, ECR repository URLs,
 # and target group ARNs for downstream use (Phase 9 Route 53 alias records,
@@ -77,26 +77,26 @@ output "target_group_client_arn" {
 }
 
 output "alb_https_listener_arn" {
-  description = "HTTPS listener ARN — null when no custom domain configured; used by cdn module for certificate association"
+  description = "HTTPS listener ARN  -  null when no custom domain configured; used by cdn module for certificate association"
   value       = length(aws_lb_listener.https) > 0 ? aws_lb_listener.https[0].arn : null
 }
 
 
 # =============================================================================
-# Phase 10 — Monitoring Module Inputs
+# Phase 10  -  Monitoring Module Inputs
 # =============================================================================
 
 output "alb_arn_suffix" {
-  description = "ALB ARN suffix (e.g. app/name/abc123) — required as CloudWatch metric dimension; CloudWatch rejects the full ARN"
+  description = "ALB ARN suffix (e.g. app/name/abc123)  -  required as CloudWatch metric dimension; CloudWatch rejects the full ARN"
   value       = aws_lb.main.arn_suffix
 }
 
 output "ecs_account_primary_service_name" {
-  description = "Account Service primary ECS service name — used as CloudWatch alarm ServiceName dimension"
+  description = "Account Service primary ECS service name  -  used as CloudWatch alarm ServiceName dimension"
   value       = aws_ecs_service.account_primary.name
 }
 
 output "ecs_client_primary_service_name" {
-  description = "Client Service primary ECS service name — used as CloudWatch alarm ServiceName dimension"
+  description = "Client Service primary ECS service name  -  used as CloudWatch alarm ServiceName dimension"
   value       = aws_ecs_service.client_primary.name
 }

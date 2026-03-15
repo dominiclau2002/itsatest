@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.10"
 
   required_providers {
     aws = {
@@ -10,7 +10,7 @@ terraform {
       configuration_aliases = [aws.us_east_1]
     }
     # random: generates the RDS master password and Redis AUTH tokens.
-    # These are created once and stored in Secrets Manager — not regenerated on each apply.
+    # These are created once and stored in Secrets Manager  -  not regenerated on each apply.
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
@@ -22,20 +22,17 @@ terraform {
     }
   }
 
-  # Remote state backend — S3 bucket and DynamoDB lock table must be bootstrapped
-  # via AWS CLI before running `terraform init`. See CLAUDE.md Commands section
-  # for the bootstrap commands.
+  # Remote state backend  -  S3 bucket must be bootstrapped via AWS CLI before
+  # running `terraform init`. See CLAUDE.md Commands section for bootstrap commands.
+  # use_lockfile (Terraform 1.10+): native S3 conditional-write locking  -  no DynamoDB table needed.
   backend "s3" {
-    bucket         = "itsa-testing-setup-dev-terraform-state"
-    key            = "dev/terraform.tfstate"
-    region         = "ap-southeast-1"
-    dynamodb_table = "itsa-testing-setup-dev-terraform-lock"
-    encrypt        = true
-    profile        = "dominic-admin"
+    region       = "ap-southeast-1"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 
-# Default provider — ap-southeast-1 for all resources except WAF (us-east-1)
+# Default provider  -  ap-southeast-1 for all resources except WAF (us-east-1)
 provider "aws" {
   region  = var.aws_region
   profile = var.profile
@@ -46,13 +43,13 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Project     = var.project_name
-      CostCenter  = "CS301"
-      CreatedDate = "2026-02-21"
+      CostCenter  = var.cost_center
+      CreatedDate = var.created_date
     }
   }
 }
 
-# us-east-1 provider — required for CloudFront WAF Web ACL (scope = CLOUDFRONT).
+# us-east-1 provider  -  required for CloudFront WAF Web ACL (scope = CLOUDFRONT).
 # WAF ACLs with scope=CLOUDFRONT must be created in us-east-1 regardless of
 # the distribution's global nature. Using any other region is a hard API error.
 provider "aws" {
@@ -65,8 +62,8 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Project     = var.project_name
-      CostCenter  = "CS301"
-      CreatedDate = "2026-02-21"
+      CostCenter  = var.cost_center
+      CreatedDate = var.created_date
     }
   }
 }
